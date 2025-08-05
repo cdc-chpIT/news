@@ -227,5 +227,17 @@ const apiService = {
         return this._request(`/user-procurements/${userProcurementId}`, {
             method: 'DELETE'
         });
+    },
+
+    // --- APIs for User Preferences ---
+    fetchUserSchedule() {
+        return this._request('/users/me/preferences/schedule', { method: 'GET' });
+    },
+
+    updateUserSchedule(scheduleData) {
+        return this._request('/users/me/preferences/schedule', {
+            method: 'PUT',
+            body: JSON.stringify(scheduleData)
+        });
     }
 };
