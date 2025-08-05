@@ -306,19 +306,32 @@ async function initializeAuthUI() {
     const user = getCurrentUser();
 
     if (user) {
-        // Fetch saved item IDs/counts for UI indicators
+        // FIX: Make data fetching resilient to failures (e.g., new user without a schedule)
         try {
-            const [articlesResult, procurementsResult] = await Promise.all([
+            const results = await Promise.allSettled([
                 apiService.getSavedArticleIds(),
                 apiService.fetchUserProcurements()
             ]);
-            if (articlesResult.success && Array.isArray(articlesResult.data)) savedArticleIds = new Set(articlesResult.data);
-            if (procurementsResult.success && Array.isArray(procurementsResult.data)) {
+
+            const articlesResult = results[0];
+            const procurementsResult = results[1];
+
+            if (articlesResult.status === 'fulfilled' && articlesResult.value.success) {
+                savedArticleIds = new Set(articlesResult.value.data);
+            } else if (articlesResult.status === 'rejected') {
+                console.error("Could not fetch saved articles:", articlesResult.reason);
+            }
+
+            if (procurementsResult.status === 'fulfilled' && procurementsResult.value.success) {
                 savedProcurements.clear();
-                procurementsResult.data.forEach(item => savedProcurements.set(item.item_code, item.user_procurement_id));
+                procurementsResult.value.data.forEach(item => {
+                    savedProcurements.set(item.item_code, item.user_procurement_id);
+                });
+            } else if (procurementsResult.status === 'rejected') {
+                console.error("Could not fetch saved procurements:", procurementsResult.reason);
             }
         } catch (error) {
-            console.error("Could not fetch saved items on init:", error);
+            console.error("An unexpected error occurred during initial data fetch:", error);
         }
 
         // Render user dropdown menu
@@ -434,11 +447,15 @@ async function populateEmailSettingsForm() {
             }
         }
     } catch (error) {
-        // Only show an error if it's not a "Not Found" error (which is expected for new users)
-        if (error.message && !error.message.toLowerCase().includes('not found')) {
+        // FIX: Check the error message string directly for the "not set" text
+        const isNotFoundError = error.message && error.message.includes("Notification schedule not set for this user");
+        
+        if (!isNotFoundError) {
+            // This is an unexpected error, so we show a generic message.
+            console.error("An unexpected error occurred while fetching the user schedule:", error);
             alertContainer.innerHTML = `<div class="alert alert-danger">Lỗi không xác định khi tải cài đặt.</div>`;
         }
-        // For "Not Found", we simply do nothing, leaving the form in its default, disabled state.
+        // For "NOT_FOUND" errors, we do nothing and show no message.
     }
 }
 
