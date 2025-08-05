@@ -10,6 +10,7 @@
         @keyframes spin { to { transform: rotate(360deg); } }
     </style>
     <script src="./js/config.js"></script>
+    <script src="./js/auth_config.js"></script> 
 </head>
 <body>
     <div class="container">
@@ -20,12 +21,6 @@
     <script>
         const API_URL = config.API_BASE_URL;
 
-        /**
-         * Thiết lập một cookie.
-         * @param {string} name - Tên của cookie.
-         * @param {string} value - Giá trị của cookie.
-         * @param {number} days - Số ngày cookie tồn tại.
-         */
         function setCookie(name, value, days) {
             let expires = "";
             if (days) {
@@ -33,7 +28,6 @@
                 date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
                 expires = "; expires=" + date.toUTCString();
             }
-            // Mã hóa giá trị để đảm bảo an toàn khi lưu trữ đối tượng JSON
             const encodedValue = encodeURIComponent(value);
             document.cookie = name + "=" + (encodedValue || "")  + expires + "; path=/";
         }
@@ -44,10 +38,14 @@
 
             if (authCode) {
                 try {
+                    // Gọi API với body mới, bao gồm cả redirectUri
                     const response = await fetch(`${API_URL}/auth/google`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ authorizationCode: authCode })
+                        body: JSON.stringify({ 
+                            authorizationCode: authCode,
+                            redirectUri: REDIRECT_URI // <-- Gửi redirectUri lên backend
+                        })
                     });
 
                     const data = await response.json();
@@ -56,19 +54,14 @@
                         throw new Error(data.detail || 'Đăng nhập thất bại.');
                     }
                     
-                    // Lưu thông tin user và token vào cookie
-                    // Token thường có thời gian hết hạn ngắn, ví dụ 1 ngày
                     setCookie('accessToken', data.access_token, 1); 
-                    // Refresh token có thể lưu lâu hơn, ví dụ 7 ngày
                     setCookie('refreshToken', data.refresh_token, 7); 
-                    // Lưu thông tin người dùng dưới dạng chuỗi JSON
                     setCookie('user', JSON.stringify({
                         email: data.email,
                         username: data.username,
                         avatar_url: data.avatar_url,
                     }), 7);
 
-                    // Chuyển hướng về trang chủ sau khi đăng nhập thành công
                     window.location.href = '/index.html';
 
                 } catch (error) {
