@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Nguồn tin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="d-flex">
+        <div id="main-sidebar-container"></div>
+
+        <div class="main-content flex-grow-1">
+            <header id="header-container"></header>
+
+            <main class="container-fluid mt-4">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-light">
+                        <div class="d-flex justify-content-between align-items-center">
+                             <h5 class="mb-0"><i class="bi bi-newspaper me-2"></i>Quản lý Nguồn tin</h5>
+                             <button id="addSourceBtn" class="btn btn-primary">
+                                <i class="bi bi-plus-circle-fill me-2"></i>Thêm Mới
+                            </button>
+                        </div>
+                        <hr>
+                        <div class="row g-2 align-items-center">
+                            <div class="col-md-5">
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                    <input type="text" id="searchInput" class="form-control" placeholder="Tìm theo tên nguồn tin...">
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <select id="filterBy" class="form-select">
+                                    <option value="" selected>Lọc theo...</option>
+                                    <option value="platform">Nền tảng</option>
+                                    <option value="source_type">Loại nguồn</option>
+                                    <option value="status">Trạng thái</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3" id="filter-value-container">
+                                <select id="platformFilter" class="form-select filter-value-dropdown d-none">
+                                    <option value="" selected>Tất cả nền tảng</option>
+                                    <option value="News">Báo chí</option>
+                                    <option value="Facebook">Facebook</option>
+                                    <option value="PublicProcurement">Mua sắm công</option>
+                                    <option value="Shopee">Shopee</option>
+                                    <option value="Blog">Blog</option>
+                                </select>
+                                <select id="sourceTypeFilter" class="form-select filter-value-dropdown d-none">
+                                     <option value="" selected>Tất cả loại</option>
+                                    <option value="RSS">RSS</option>
+                                    <option value="API">API</option>
+                                    <option value="Sitemap">Sitemap</option>
+                                    <option value="HTML">HTML</option>
+                                    <option value="Other">Khác</option>
+                                </select>
+                                <select id="statusFilter" class="form-select filter-value-dropdown d-none">
+                                     <option value="" selected>Tất cả trạng thái</option>
+                                    <option value="ACTIVE">Đang hoạt động</option>
+                                    <option value="INACTIVE">Không hoạt động</option>
+                                </select>
+                            </div>
+                            <div class="col-md-1">
+                                <button id="resetFiltersBtn" class="btn btn-outline-secondary w-100" title="Xóa bộ lọc">
+                                    <i class="bi bi-x-lg"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div id="alert-container"></div>
+                        <div class="table-responsive">
+                            <table class="table table-hover table-bordered table-sources">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th scope="col" class="text-center sortable-header" data-sort="source_id">ID</th>
+                                        <th scope="col" class="sortable-header" data-sort="source_name">Tên nguồn tin</th>
+                                        <th scope="col" class="text-center">Số bài viết</th>
+                                        <th scope="col" class="text-center">Loại</th>
+                                        <th scope="col" class="text-center">Nền tảng</th>
+                                        <th scope="col" class="text-center">Trạng thái</th>
+                                        <th scope="col" class="text-center sortable-header" data-sort="last_crawled_at">Lần quét cuối</th>
+                                        <th scope="col" class="text-center">Hành động</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="sourcesTableBody">
+                                    </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="card-footer d-flex justify-content-center" id="pagination-controls">
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <div class="modal fade" id="sourceModal" tabindex="-1" aria-labelledby="sourceModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="sourceModalLabel">Thêm Nguồn tin mới</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="sourceForm">
+                        <input type="hidden" id="sourceId">
+                        <div class="mb-3">
+                            <label for="sourceName" class="form-label">Tên nguồn tin</label>
+                            <input type="text" class="form-control" id="sourceName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="sourceUrl" class="form-label">URL Nguồn</label>
+                            <input type="url" class="form-control" id="sourceUrl" placeholder="https://example.com/rss.xml" required>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="sourceType" class="form-label">Loại nguồn</label>
+                                <select id="sourceType" class="form-select" required>
+                                    <option value="RSS" selected>RSS</option>
+                                    <option value="API">API</option>
+                                    <option value="Sitemap">Sitemap</option>
+                                    <option value="HTML">HTML</option>
+                                    <option value="Other">Khác</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="platform" class="form-label">Nền tảng</label>
+                                <select id="platform" class="form-select" required>
+                                    <option value="News" selected>Báo chí</option>
+                                    <option value="Facebook">Facebook</option>
+                                    <option value="PublicProcurement">Mua sắm công</option>
+                                    <option value="Shopee">Shopee</option>
+                                    <option value="Blog">Blog</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="status" class="form-label">Trạng thái</label>
+                            <select id="status" class="form-select" required>
+                                <option value="ACTIVE" selected>Đang hoạt động</option>
+                                <option value="INACTIVE">Không hoạt động</option>
+                            </select>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                            <button type="submit" class="btn btn-primary">Lưu</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="./js/config.js"></script>
+    <script src="./js/utils.js"></script>
+    <script src="./js/services/api.js"></script>
+    <script src="./js/state.js"></script> <script src="./js/components/layout.js"></script>
+    <script src="./js/components/pagination.js"></script>
+    <script src="./js/components/articleCard.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="./js/sources.js"></script>
+    <script src="./js/auth_config.js"></script>
+    <script src="./js/auth.js"></script>
+</body>
+</html>
