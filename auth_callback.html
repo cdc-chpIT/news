@@ -62,7 +62,7 @@
                         avatar_url: data.avatar_url,
                     }), 7);
 
-                    window.location.href = '/index.html';
+                    window.location.href = 'index.html';
 
                 } catch (error) {
                     console.error('Lỗi khi gọi API backend:', error);
@@ -71,7 +71,7 @@
             } else {
                 document.body.innerHTML = '<p style="color: red;">Không tìm thấy mã xác thực. Đang chuyển hướng...</p>';
                 setTimeout(() => {
-                    window.location.href = '/index.html';
+                    window.location.href = 'index.html';
                 }, 3000);
             }
         };
