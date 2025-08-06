@@ -258,6 +258,9 @@ const apiService = {
     },
 
     setUserKeywords(keywordTexts) {
+        if (keywordTexts === null) {
+            return Promise.resolve({ success: true, message: 'Không có từ khóa mới để thêm.' });
+        }
         if (!Array.isArray(keywordTexts)) {
             return Promise.reject(new Error("Invalid data provided to setUserKeywords. Expected an array."));
         }

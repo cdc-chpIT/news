@@ -556,23 +556,32 @@ function setupModalEventListeners(modalElement) {
     
     // Handle the "Save Keywords" button click
     document.getElementById('save-keywords-btn')?.addEventListener('click', async(e) => {
-        const saveBtn = e.target;
+        const saveBtn = e.target.closest('.btn');
         const originalHtml = saveBtn.innerHTML;
         saveBtn.disabled = true;
         saveBtn.innerHTML = `<span class="spinner-border spinner-border-sm"></span> Đang lưu...`;
 
         const selectedContainer = document.getElementById('selected-keywords-container');
+        const alertContainer = document.getElementById('email-settings-alert-container');
+        alertContainer.innerHTML = ''; // Clear previous alerts
+
         const selectedTags = selectedContainer.querySelectorAll('.keyword-email-tag');
         const keywordTexts = Array.from(selectedTags).map(tag => tag.dataset.keywordText);
 
+        // If the list of keywords is empty, show a message and do not call the API.
+        if (keywordTexts.length === 0) {
+            alertContainer.innerHTML = `<div class="alert alert-info alert-dismissible fade show">Không có từ khóa nào được chọn để lưu.<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>`;
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = originalHtml;
+            return; // Stop the function
+        }
+
         try {
             await apiService.setUserKeywords(keywordTexts);
-            const alertContainer = document.getElementById('email-settings-alert-container');
             alertContainer.innerHTML = `<div class="alert alert-success alert-dismissible fade show">Đã lưu danh sách từ khóa theo dõi thành công!<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>`;
             // Crucial Fix: Re-fetch and render the entire keyword section to get updated custom_keyword_ids
             await populateEmailSettingsForm();
         } catch (error) {
-            const alertContainer = document.getElementById('email-settings-alert-container');
             alertContainer.innerHTML = `<div class="alert alert-danger alert-dismissible fade show">Lỗi khi lưu từ khóa: ${error.message}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>`;
         } finally {
             saveBtn.disabled = false;
