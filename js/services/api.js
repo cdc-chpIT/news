@@ -12,11 +12,16 @@ const apiService = {
             headers['Authorization'] = `Bearer ${token}`;
         }
 
+        // Default cache option is 'default', can be overridden
+        const fetchOptions = {
+            headers,
+            cache: options.cache || 'default',
+            ...options,
+        };
+
+
         try {
-            const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-                headers,
-                ...options,
-            });
+            const response = await fetch(`${API_BASE_URL}${endpoint}`, fetchOptions);
 
             if (response.status === 204) { // Xử lý cho trường hợp xóa thành công (No Content)
                 return { success: true, message: 'Xóa thành công.' };
@@ -24,8 +29,14 @@ const apiService = {
 
             const result = await response.json();
             if (!response.ok) {
-                // Ưu tiên hiển thị lỗi từ message của API
-                throw new Error(result.message || result.detail || 'Có lỗi không xác định từ API.');
+                let errorMsg = 'Có lỗi không xác định từ API.';
+                if (result.message) {
+                    errorMsg = result.message;
+                } else if (result.detail) {
+                    // If detail is an object/array, stringify it for better logging.
+                    errorMsg = typeof result.detail === 'string' ? result.detail : JSON.stringify(result.detail);
+                }
+                throw new Error(errorMsg);
             }
             return result;
 
@@ -42,7 +53,7 @@ const apiService = {
      * @param {object} params - Các tham số truy vấn.
      * @returns {Promise<object|null>}
      */
-    async _fetch(endpoint, params = {}) {
+    async _fetch(endpoint, params = {}, fetchOptions = {}) {
         const urlParams = new URLSearchParams();
         for (const key in params) {
             const value = params[key];
@@ -56,7 +67,7 @@ const apiService = {
         }
         const queryString = urlParams.toString();
         const fullEndpoint = queryString ? `${endpoint}?${queryString}` : endpoint;
-        return this._request(fullEndpoint, { method: 'GET' });
+        return this._request(fullEndpoint, { method: 'GET', ...fetchOptions });
     },
 
     // --- APIs cho Articles ---
@@ -238,6 +249,27 @@ const apiService = {
         return this._request('/users/me/preferences/schedule', {
             method: 'PUT',
             body: JSON.stringify(scheduleData)
+        });
+    },
+
+    fetchUserKeywords() {
+        // FIX: Ensure this call always gets fresh data from the server
+        return this._fetch('/users/me/preferences/keywords', {}, { cache: 'no-cache' });
+    },
+
+    setUserKeywords(keywordTexts) {
+        if (!Array.isArray(keywordTexts)) {
+            return Promise.reject(new Error("Invalid data provided to setUserKeywords. Expected an array."));
+        }
+        return this._request('/users/me/preferences/keywords', {
+            method: 'POST',
+            body: JSON.stringify({ keywords: keywordTexts })
+        });
+    },
+    
+    removeUserKeyword(customKeywordId) {
+        return this._request(`/users/me/preferences/keywords/${customKeywordId}`, {
+            method: 'DELETE'
         });
     }
 };

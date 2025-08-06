@@ -248,7 +248,7 @@ function injectSavedItemsModal() {
                         </div>
                         <div class="tab-pane fade" id="email-settings-pane" role="tabpanel" aria-labelledby="email-settings-tab" tabindex="0">
                             <!-- Email Settings Form -->
-                            <form id="email-settings-form">
+                            <form id="email-settings-form" onsubmit="return false;">
                                 <div id="email-settings-alert-container"></div>
                                 <p class="text-muted">Cấu hình hệ thống tự động gửi email tổng hợp tin tức mới theo lịch bạn chọn.</p>
                                 
@@ -270,20 +270,35 @@ function injectSavedItemsModal() {
                                             <div class="form-check"><input class="form-check-input" type="checkbox" value="Sunday" id="day-sun"><label class="form-check-label" for="day-sun">CN</label></div>
                                         </div>
                                     </div>
-                                    <div class="row">
-                                        <div class="col-md-12 mb-3">
-                                            <label for="emailTimeOfDay" class="form-label fw-semibold">Thời gian gửi (UTC):</label>
-                                            <input type="time" class="form-control" id="emailTimeOfDay" required>
+                                    <div class="mb-3">
+                                        <label for="emailTimeOfDay" class="form-label fw-semibold">Thời gian gửi (UTC):</label>
+                                        <input type="time" class="form-control" id="emailTimeOfDay" required>
+                                    </div>
+                                    <div class="d-flex justify-content-end mb-3">
+                                         <button type="button" id="save-schedule-btn" class="btn btn-primary">
+                                            <i class="bi bi-save-fill me-2"></i>Lưu cài đặt lịch
+                                        </button>
+                                    </div>
+                                    <hr class="my-4">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <label class="form-label fw-semibold mb-0">Chọn từ khóa để theo dõi:</label>
+                                        <div class="btn-group">
+                                            <button class="btn btn-sm btn-outline-primary" type="button" id="add-new-keyword-btn">
+                                                <i class="bi bi-plus-circle me-1"></i>Thêm từ khóa mới
+                                            </button>
+                                            <button type="button" id="save-keywords-btn" class="btn btn-sm btn-primary">
+                                                <i class="bi bi-save-fill me-2"></i>Lưu từ khóa
+                                            </button>
                                         </div>
                                     </div>
+                                    <div id="selected-keywords-container" class="email-keywords-list mb-3 p-3 bg-light rounded" style="min-height: 50px;">
+                                        <!-- Selected keywords will move here -->
+                                    </div>
+                                    <hr>
+                                    <div id="available-keywords-area">
+                                        <!-- Categorized keywords will be rendered here -->
+                                    </div>
                                 </fieldset>
-                                
-                                <hr>
-                                <div class="d-flex justify-content-end">
-                                    <button type="submit" id="saveEmailSettingsBtn" class="btn btn-primary">
-                                        <i class="bi bi-save-fill me-2"></i>Lưu thay đổi
-                                    </button>
-                                </div>
                             </form>
                         </div>
                     </div>
@@ -296,6 +311,45 @@ function injectSavedItemsModal() {
     </div>`;
     document.body.insertAdjacentHTML('beforeend', modalHtml);
 }
+
+/**
+ * Injects the "Add Keyword" modal HTML into the document body.
+ * This function ensures the modal is available for use.
+ */
+function injectAddKeywordModal() {
+    if (document.getElementById('addKeywordModal')) return;
+
+    const modalHtml = `
+    <div class="modal fade" id="addKeywordModal" tabindex="-1" aria-labelledby="addKeywordModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addKeywordModalLabel">Thêm Từ khóa mới</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="add-keyword-alert-container"></div>
+                    <form id="addKeywordForm">
+                        <div class="mb-3">
+                            <label for="newKeywordText" class="form-label">Nội dung từ khóa</label>
+                            <input type="text" class="form-control" id="newKeywordText" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="newKeywordCategory" class="form-label">Chọn danh mục</label>
+                            <select id="newKeywordCategory" placeholder="Chọn một danh mục..." required></select>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                            <button type="submit" class="btn btn-primary">Lưu</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>`;
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
 
 /**
  * Initializes the authentication UI, showing either the user dropdown or the login button.
@@ -353,6 +407,7 @@ async function initializeAuthUI() {
         document.getElementById('logout-btn').addEventListener('click', logout);
         
         injectSavedItemsModal();
+        injectAddKeywordModal(); // Ensure the "Add Keyword" modal is in the DOM
 
         const myAccountLink = document.getElementById('my-account-link');
         const savedItemsModalElement = document.getElementById('savedItemsModal');
@@ -386,6 +441,10 @@ async function initializeAuthUI() {
  * @param {HTMLElement} modalElement - The main modal element.
  */
 function setupModalEventListeners(modalElement) {
+    // State for the "Add Keyword" modal
+    let addKeywordModalInstance = null;
+    let categoryTomSelect = null;
+
     // Listen for filter changes
     modalElement.addEventListener('input', e => {
         if (e.target.id === 'saved-article-search') displaySavedArticles();
@@ -401,72 +460,272 @@ function setupModalEventListeners(modalElement) {
     document.getElementById('saved-articles-tab')?.addEventListener('show.bs.tab', loadSavedArticles);
     document.getElementById('saved-procurements-tab')?.addEventListener('show.bs.tab', loadSavedProcurements);
 
-    // Listen for email settings form submission
-    document.getElementById('email-settings-form')?.addEventListener('submit', handleSaveEmailSettings);
+    // Listen for schedule save button
+    document.getElementById('save-schedule-btn')?.addEventListener('click', handleSaveEmailSettings);
 
     // Listen for the schedule active/inactive switch
     document.getElementById('emailScheduleActive')?.addEventListener('change', (e) => {
         document.getElementById('email-schedule-fieldset').disabled = !e.target.checked;
     });
 
-    // Listen for clicks on unsave buttons
+    // Listen for clicks on unsave buttons (for articles and procurements)
     modalElement.addEventListener('click', handleUnsaveActions);
+
+    // Listen for click on "Add New Keyword" button
+    document.getElementById('add-new-keyword-btn')?.addEventListener('click', async () => {
+        const addKeywordModalEl = document.getElementById('addKeywordModal');
+        if (!addKeywordModalInstance) {
+            addKeywordModalInstance = new bootstrap.Modal(addKeywordModalEl);
+        }
+
+        const catResult = await apiService.fetchCategories();
+        const categories = catResult.success ? catResult.data : [];
+        const selectEl = document.getElementById('newKeywordCategory');
+        
+        if (categoryTomSelect) categoryTomSelect.destroy();
+        categoryTomSelect = new TomSelect(selectEl, {
+            valueField: 'category_id',
+            labelField: 'name',
+            searchField: 'name',
+            options: categories,
+        });
+        
+        document.getElementById('addKeywordForm').reset();
+        categoryTomSelect.clear();
+        addKeywordModalInstance.show();
+    });
+    
+    // Listen for form submission in the "Add Keyword" modal
+    document.getElementById('addKeywordForm')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const alertContainer = document.getElementById('add-keyword-alert-container');
+        alertContainer.innerHTML = '';
+        const data = {
+            keyword_text: document.getElementById('newKeywordText').value.trim(),
+            category_id: categoryTomSelect.getValue()
+        };
+
+        if (!data.keyword_text || !data.category_id) {
+            alertContainer.innerHTML = `<div class="alert alert-warning">Vui lòng nhập nội dung và chọn danh mục.</div>`;
+            return;
+        }
+
+        try {
+            const result = await apiService.createKeyword(data);
+            if (result.success) {
+                addKeywordModalInstance.hide();
+                await populateEmailSettingsForm();
+            } else {
+                alertContainer.innerHTML = `<div class="alert alert-danger">${result.message || 'Lỗi không xác định.'}</div>`;
+            }
+        } catch (error) {
+            alertContainer.innerHTML = `<div class="alert alert-danger">${error.message}</div>`;
+        }
+    });
+
+    // Handle moving keyword tags and deleting them via API
+    document.getElementById('email-schedule-fieldset')?.addEventListener('click', async (e) => {
+        const tag = e.target.closest('.keyword-email-tag');
+        const deleteBtn = e.target.closest('.delete-keyword-btn');
+
+        if (deleteBtn) {
+            e.stopPropagation();
+            const customKeywordId = deleteBtn.dataset.customKeywordId;
+            const tagToRemove = document.querySelector(`.keyword-email-tag[data-custom-keyword-id="${customKeywordId}"]`);
+            
+            try {
+                await apiService.removeUserKeyword(customKeywordId);
+                const categoryId = tagToRemove.dataset.categoryId || 'uncategorized';
+                const availableList = document.querySelector(`.email-keywords-list[data-category-id="${categoryId}"]`);
+                if (availableList) {
+                    tagToRemove.querySelector('.delete-keyword-btn').remove();
+                    availableList.appendChild(tagToRemove);
+                } else {
+                    tagToRemove.remove();
+                }
+            } catch (error) {
+                alert(`Lỗi khi xóa từ khóa: ${error.message}`);
+            }
+        } else if (tag) {
+            const selectedContainer = document.getElementById('selected-keywords-container');
+            if (tag.parentElement !== selectedContainer) {
+                selectedContainer.appendChild(tag);
+            }
+        }
+    });
+    
+    // Handle the "Save Keywords" button click
+    document.getElementById('save-keywords-btn')?.addEventListener('click', async(e) => {
+        const saveBtn = e.target;
+        const originalHtml = saveBtn.innerHTML;
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = `<span class="spinner-border spinner-border-sm"></span> Đang lưu...`;
+
+        const selectedContainer = document.getElementById('selected-keywords-container');
+        const selectedTags = selectedContainer.querySelectorAll('.keyword-email-tag');
+        const keywordTexts = Array.from(selectedTags).map(tag => tag.dataset.keywordText);
+
+        try {
+            await apiService.setUserKeywords(keywordTexts);
+            const alertContainer = document.getElementById('email-settings-alert-container');
+            alertContainer.innerHTML = `<div class="alert alert-success alert-dismissible fade show">Đã lưu danh sách từ khóa theo dõi thành công!<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>`;
+            // Crucial Fix: Re-fetch and render the entire keyword section to get updated custom_keyword_ids
+            await populateEmailSettingsForm();
+        } catch (error) {
+            const alertContainer = document.getElementById('email-settings-alert-container');
+            alertContainer.innerHTML = `<div class="alert alert-danger alert-dismissible fade show">Lỗi khi lưu từ khóa: ${error.message}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>`;
+        } finally {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = originalHtml;
+        }
+    });
 }
 
 /**
- * Fetches and populates the email settings form with the user's current schedule.
+ * Fetches and populates the email settings form with the user's current schedule and keywords.
  */
 async function populateEmailSettingsForm() {
     const form = document.getElementById('email-settings-form');
     const fieldset = document.getElementById('email-schedule-fieldset');
     const alertContainer = document.getElementById('email-settings-alert-container');
+    const availableKeywordsArea = document.getElementById('available-keywords-area');
+    const selectedKeywordsContainer = document.getElementById('selected-keywords-container');
     
     alertContainer.innerHTML = '';
     fieldset.disabled = true;
-    form.reset(); // Reset form to default state
+    form.reset(); 
+    availableKeywordsArea.innerHTML = `<div class="text-center"><div class="spinner-border spinner-border-sm"></div></div>`;
+    selectedKeywordsContainer.innerHTML = '';
 
     try {
-        const result = await apiService.fetchUserSchedule();
-        if (result.success && result.data) {
-            const { is_active, days_of_week, time_of_day } = result.data;
-            
+        const [scheduleResult, categoriesResult, allKeywordsResult, userKeywordsResult] = await Promise.all([
+            apiService.fetchUserSchedule(),
+            apiService.fetchCategories(),
+            apiService.fetchKeywords({ limit: 1000 }), 
+            apiService.fetchUserKeywords()
+        ]);
+
+        // Populate schedule settings
+        if (scheduleResult.success && scheduleResult.data) {
+            const { is_active, days_of_week, time_of_day } = scheduleResult.data;
             document.getElementById('emailScheduleActive').checked = is_active;
             fieldset.disabled = !is_active;
-
             document.getElementById('emailTimeOfDay').value = time_of_day || '';
-            
             if (days_of_week && Array.isArray(days_of_week)) {
                 days_of_week.forEach(day => {
-                    // FIX: Convert API day (e.g., "MONDAY") to Title Case (e.g., "Monday") to match checkbox value
                     const formattedDay = day.charAt(0).toUpperCase() + day.slice(1).toLowerCase();
                     const dayCheckbox = form.querySelector(`input[value="${formattedDay}"]`);
-                    if (dayCheckbox) {
-                        dayCheckbox.checked = true;
-                    }
+                    if (dayCheckbox) dayCheckbox.checked = true;
                 });
             }
         }
-    } catch (error) {
-        // FIX: Check the error message string directly for the "not set" text
-        const isNotFoundError = error.message && error.message.includes("Notification schedule not set for this user");
+
+        // Populate keywords
+        const categories = categoriesResult.success ? categoriesResult.data : [];
+        const allKeywords = allKeywordsResult.success ? allKeywordsResult.data : [];
+        const userKeywords = userKeywordsResult.success ? userKeywordsResult.data : [];
         
-        if (!isNotFoundError) {
-            // This is an unexpected error, so we show a generic message.
-            console.error("An unexpected error occurred while fetching the user schedule:", error);
-            alertContainer.innerHTML = `<div class="alert alert-danger">Lỗi không xác định khi tải cài đặt.</div>`;
+        // FIX: Match by keyword_text and create maps for efficient lookup
+        const userKeywordTexts = new Set(userKeywords.map(kw => kw.keyword_text));
+        const userKeywordCustomIdMap = new Map(userKeywords.map(kw => [kw.keyword_text, kw.custom_keyword_id]));
+
+        const keywordsByCategoryId = allKeywords.reduce((acc, kw) => {
+            const catId = kw.category_id || 'uncategorized';
+            if (!acc[catId]) acc[catId] = [];
+            acc[catId].push(kw);
+            return acc;
+        }, {});
+
+        let availableKeywordsHtml = '';
+        categories.forEach(cat => {
+            const keywordsForCat = keywordsByCategoryId[cat.category_id] || [];
+            if (keywordsForCat.length > 0) {
+                let categoryKeywordsHtml = '';
+                keywordsForCat.forEach(kw => {
+                    if (userKeywordTexts.has(kw.keyword_text)) {
+                        selectedKeywordsContainer.innerHTML += `
+                        <span class="keyword-email-tag" 
+                              data-keyword-id="${kw.keyword_id}" 
+                              data-custom-keyword-id="${userKeywordCustomIdMap.get(kw.keyword_text)}"
+                              data-keyword-text="${kw.keyword_text}"
+                              data-category-id="${kw.category_id || 'uncategorized'}">
+                            ${kw.keyword_text}
+                            <button type="button" class="btn-close delete-keyword-btn" data-custom-keyword-id="${userKeywordCustomIdMap.get(kw.keyword_text)}"></button>
+                        </span>`;
+                    } else {
+                        categoryKeywordsHtml += `
+                        <span class="keyword-email-tag" 
+                              data-keyword-id="${kw.keyword_id}" 
+                              data-keyword-text="${kw.keyword_text}"
+                              data-category-id="${kw.category_id || 'uncategorized'}">
+                            ${kw.keyword_text}
+                        </span>`;
+                    }
+                });
+
+                if (categoryKeywordsHtml) {
+                    availableKeywordsHtml += `
+                        <div class="email-keyword-category-group">
+                            <h6 class="email-keyword-category-title">${cat.name}</h6>
+                            <div class="email-keywords-list" data-category-id="${cat.category_id}">${categoryKeywordsHtml}</div>
+                        </div>
+                    `;
+                }
+            }
+        });
+        
+        if (keywordsByCategoryId['uncategorized']) {
+            let uncategorizedHtml = '';
+            keywordsByCategoryId['uncategorized'].forEach(kw => {
+                if (userKeywordTexts.has(kw.keyword_text)) {
+                     selectedKeywordsContainer.innerHTML += `
+                        <span class="keyword-email-tag" 
+                              data-keyword-id="${kw.keyword_id}" 
+                              data-custom-keyword-id="${userKeywordCustomIdMap.get(kw.keyword_text)}"
+                              data-keyword-text="${kw.keyword_text}"
+                              data-category-id="uncategorized">
+                            ${kw.keyword_text}
+                            <button type="button" class="btn-close delete-keyword-btn" data-custom-keyword-id="${userKeywordCustomIdMap.get(kw.keyword_text)}"></button>
+                        </span>`;
+                } else {
+                    uncategorizedHtml += `
+                    <span class="keyword-email-tag" 
+                          data-keyword-id="${kw.keyword_id}" 
+                          data-keyword-text="${kw.keyword_text}"
+                          data-category-id="uncategorized">
+                        ${kw.keyword_text}
+                    </span>`;
+                }
+            });
+            if (uncategorizedHtml) {
+                 availableKeywordsHtml += `
+                    <div class="email-keyword-category-group">
+                        <h6 class="email-keyword-category-title">Chưa phân loại</h6>
+                        <div class="email-keywords-list" data-category-id="uncategorized">${uncategorizedHtml}</div>
+                    </div>
+                `;
+            }
         }
-        // For "NOT_FOUND" errors, we do nothing and show no message.
+
+        availableKeywordsArea.innerHTML = availableKeywordsHtml || '<p class="text-muted">Không có từ khóa nào để chọn.</p>';
+
+    } catch (error) {
+        const isNotFoundError = error.message && error.message.includes("Notification schedule not set for this user");
+        if (!isNotFoundError) {
+            console.error("An unexpected error occurred while fetching user settings:", error);
+            alertContainer.innerHTML = `<div class="alert alert-danger">Lỗi không xác định khi tải cài đặt.</div>`;
+            availableKeywordsArea.innerHTML = `<div class="alert alert-warning">Không thể tải danh sách từ khóa.</div>`;
+        }
     }
 }
 
 
 /**
- * Handles the submission of the email settings form.
+ * Handles the submission of the email settings form (for schedule only).
  * @param {Event} event - The form submission event.
  */
 async function handleSaveEmailSettings(event) {
-    event.preventDefault();
-    const saveBtn = document.getElementById('saveEmailSettingsBtn');
+    const saveBtn = document.getElementById('save-schedule-btn');
     const alertContainer = document.getElementById('email-settings-alert-container');
     
     alertContainer.innerHTML = '';
@@ -478,12 +737,10 @@ async function handleSaveEmailSettings(event) {
     try {
         const isActive = document.getElementById('emailScheduleActive').checked;
         
-        // Always get the current values from the form, even if disabled
         const selectedDays = Array.from(document.querySelectorAll('#emailDaysOfWeek .form-check-input:checked'))
                                   .map(chk => chk.value);
         const timeOfDay = document.getElementById('emailTimeOfDay').value;
 
-        // If the schedule is active, perform validation
         if (isActive) {
             if (selectedDays.length === 0) {
                 throw new Error("Vui lòng chọn ít nhất một ngày trong tuần để gửi email.");
@@ -496,26 +753,20 @@ async function handleSaveEmailSettings(event) {
         const payload = {
             is_active: isActive,
             days_of_week: selectedDays,
-            time_of_day: timeOfDay || '' // Send empty string if time is not set
+            time_of_day: timeOfDay || ''
         };
 
         const result = await apiService.updateUserSchedule(payload);
         if (result.success) {
-            alertContainer.innerHTML = `<div class="alert alert-success">Cài đặt đã được lưu thành công!</div>`;
+            alertContainer.innerHTML = `<div class="alert alert-success alert-dismissible fade show">Cài đặt lịch đã được lưu thành công!<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>`;
         } else {
             throw new Error(result.message || 'Lưu thất bại.');
         }
     } catch (error) {
-        alertContainer.innerHTML = `<div class="alert alert-danger">Lỗi: ${error.message}</div>`;
+        alertContainer.innerHTML = `<div class="alert alert-danger alert-dismissible fade show">Lỗi: ${error.message}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>`;
     } finally {
-        setTimeout(() => {
-            saveBtn.disabled = false;
-            saveBtn.innerHTML = originalBtnHtml;
-            // Clear the success/error message after a delay
-            if(alertContainer.querySelector('.alert-success')) {
-               alertContainer.innerHTML = '';
-            }
-        }, 3000);
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = originalBtnHtml;
     }
 }
 
@@ -529,7 +780,6 @@ async function loadSavedArticles() {
         const result = await apiService.fetchSavedArticles();
         if (result.success && Array.isArray(result.data)) {
             allSavedArticles = result.data;
-            // Add a dummy saved_at for sorting purposes as API doesn't provide it
             allSavedArticles.forEach(a => a.saved_at = a.saved_at || new Date()); 
             displaySavedArticles();
         } else { throw new Error(result.message || "Không thể tải bài viết đã lưu."); }
