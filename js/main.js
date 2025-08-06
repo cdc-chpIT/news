@@ -380,24 +380,43 @@ document.addEventListener('DOMContentLoaded', () => {
     // === INITIALIZATION ===
     async function initialize() {
         renderLayout();
-        await initializeTomSelects(); // Using await just in case
+        await initializeTomSelects();
         addEventListeners();
-
-        // // === FETCH SAVED ARTICLES ON LOAD ===
-        // if (getCurrentUser()) { // Only fetch if user is logged in
-        //     try {
-        //         const result = await apiService.getSavedArticleIds();
-        //         if (result.success && Array.isArray(result.data)) {
-        //             savedArticleIds = new Set(result.data);
-        //         }
-        //     } catch (error) {
-        //         console.error("Could not fetch saved articles:", error);
-        //         // Don't show an alert here, just fail silently
-        //     }
-        // }
-        // ===================================
-        
-        // Now fetch articles, which will use the `savedArticleIds` set
+    
+        if (getCurrentUser()) {
+            try {
+                // Fetch user's preferred keywords and all system keywords simultaneously for efficiency
+                const [userKeywordsResult, allKeywordsResult] = await Promise.all([
+                    apiService.fetchUserKeywords(),
+                    apiService.fetchKeywords({ limit: 1000 }) // Fetch all keywords to map text to ID
+                ]);
+    
+                if (userKeywordsResult.success && allKeywordsResult.success) {
+                    const userKeywordTexts = new Set(userKeywordsResult.data.map(kw => kw.keyword_text));
+                    const allKeywords = allKeywordsResult.data;
+    
+                    // Find the full keyword objects (with IDs) that match the user's preferences
+                    const preferredKeywords = allKeywords.filter(kw => userKeywordTexts.has(kw.keyword_text));
+    
+                    if (preferredKeywords.length > 0) {
+                        // Update the local state for displaying tags in the UI
+                        selectedKeywords = preferredKeywords.map(kw => ({ id: kw.keyword_id, text: kw.keyword_text }));
+                        
+                        // Update the main query state with the keyword IDs for the API call
+                        const preferredKeywordIds = preferredKeywords.map(kw => kw.keyword_id);
+                        queryState.crawl_keyword_id = preferredKeywordIds;
+    
+                        // Render the selected keyword tags in the filter sidebar
+                        renderSelectedKeywordTags();
+                    }
+                }
+            } catch (error) {
+                console.error("Could not fetch and apply user's preferred keywords:", error);
+                // Fail silently without showing an error to the user
+            }
+        }
+    
+        // Fetch and render all page content. `fetchAndRenderArticles` will now use the updated queryState.
         fetchAndRenderArticles();
         fetchAndRenderCategories();
         fetchAndRenderSources();

@@ -30,9 +30,8 @@ function createSidebar(activePage = 'dashboard') {
 
     return `
         <div class="main-sidebar d-flex flex-column flex-shrink-0 p-3 bg-light">
-            <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto link-dark text-decoration-none">
-                <i class="bi bi-robot me-2" style="font-size: 2rem;"></i>
-                <span class="fs-4">Article Analysis</span>
+            <a href="/" class="d-flex align-items-center justify-content-center mb-3 mb-md-0 link-dark text-decoration-none">
+                <img src="images/CHP_Logo.png" alt="Logo" style="width: 100px; height: 60px;">
             </a>
             <hr>
             <ul class="nav nav-pills flex-column mb-auto">
