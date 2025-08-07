@@ -41,6 +41,17 @@ function createArticleCard(article) {
     // Create the sentiment indicator HTML
     const sentimentIndicatorHtml = createSentimentIndicator(article.sentiment);
 
+    const imageHtml = article.image_url
+        ? `<img 
+            src="${article.image_url}" 
+            alt="${article.title.substring(0, 50)}" 
+            class="article-thumbnail me-3 rounded" 
+            style="width: 100px; height: 100px; object-fit: cover; flex-shrink: 0;"
+            referrerpolicy="no-referrer"
+            onerror="this.style.display='none';"
+            >`
+        : '';
+
     // Format published_at and crawl_date
     const publishedDate = article.published_at ? new Date(article.published_at) : null;
     const crawlDate = article.crawl_date ? new Date(article.crawl_date) : null;
@@ -69,22 +80,27 @@ function createArticleCard(article) {
     `;
 
     return `
-        <div class="card article-card shadow-sm position-relative" data-article-id-wrapper="${article.article_id}">
-            ${newNewsIndicatorHtml} ${sentimentIndicatorHtml}
-            <div class="card-body">
-                <h5 class="card-title">${article.title}</h5>
-                <p class="card-subtitle mb-2 text-muted small">
-                    <strong>Nguồn:</strong> ${article.source?.source_name || 'N/A'} | 
-                    <strong>Ngày xuất bản:</strong> ${publishedDateString} |
-                    <strong>Ngày cập nhật:</strong> ${crawlDateString}
-                </p>
-                <p class="card-text small">${(article.content || '').substring(0, 200)}...</p>
+        <div class="card article-card shadow-sm position-relative" data-article-id-wrapper="${article.article_id}"> 
+            ${newNewsIndicatorHtml} ${sentimentIndicatorHtml}
+            <div class="card-body">
+                <div class="d-flex align-items-start">
+                    ${imageHtml}
+                    <div class="flex-grow-1">
+                        <h5 class="card-title">${article.title}</h5>
+                        <p class="card-subtitle mb-2 text-muted small">
+                            <strong>Nguồn:</strong> ${article.source?.source_name || 'N/A'} | 
+                            <strong>Ngày xuất bản:</strong> ${publishedDateString} |
+                            <strong>Ngày cập nhật:</strong> ${crawlDateString}
+                        </p>
+                        <p class="card-text small">${(article.content || '').substring(0, 200)}...</p>
+                    </div>
+                </div>
                 <div class="d-flex justify-content-between align-items-end mt-3">
                     <div class="tags-container">${categoryHtml}${keywordsHtml}</div>
                     ${saveIconHtml} 
                 </div>
                 <a href="${article.url}" target="_blank" class="stretched-link" title="Đọc bài viết gốc"></a>
-            </div>
-        </div>
-    `;
+            </div>
+        </div>
+    `;
 }
