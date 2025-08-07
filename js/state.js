@@ -7,7 +7,7 @@ let queryState = {
     sort_by: 'published_at',
     sort_order: 'desc',
     page: 1,
-    size: 10
+    size: 9
 };
 
 let savedArticleIds = new Set();
@@ -27,7 +27,7 @@ function updatePageState(updates, callback) {
 function resetQueryState(callback) {
     queryState = {
         search: '', sentiment: '', category_id: null, source_id: null, crawl_keyword_id: [], 
-        sort_by: 'published_at', sort_order: 'desc', page: 1, size: 10
+        sort_by: 'published_at', sort_order: 'desc', page: 1, size: 9
     };
     if (callback) callback();
 }

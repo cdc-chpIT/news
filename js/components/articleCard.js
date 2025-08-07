@@ -35,72 +35,73 @@ function createSentimentIndicator(sentiment) {
 
 
 function createArticleCard(article) {
-    const categoryHtml = article.category ? `<span class="badge bg-primary-subtle text-primary-emphasis me-1 tag" data-type="category" data-id="${article.category.category_id}">${article.category.name}</span>` : '';
-    const keywordsHtml = (article.keywords || []).map(kw => `<span class="badge bg-secondary-subtle text-secondary-emphasis me-1 tag" data-type="keyword" data-id="${kw.keyword_id}">${kw.keyword_text}</span>`).join('');
-    
-    // Create the sentiment indicator HTML
+    // --- 1. Chuẩn bị dữ liệu (giữ nguyên) ---
+    const categoryName = article.category ? article.category.name : '';
+    const keywordsHtml = (article.keywords || [])
+        .map(kw => `<span class="badge bg-light text-dark border me-1">${kw.keyword_text}</span>`)
+        .join('');
+
     const sentimentIndicatorHtml = createSentimentIndicator(article.sentiment);
 
-    const imageHtml = article.image_url
-        ? `<img 
-            src="${article.image_url}" 
-            alt="${article.title.substring(0, 50)}" 
-            class="article-thumbnail me-3 rounded" 
-            style="width: 100px; height: 100px; object-fit: cover; flex-shrink: 0;"
-            referrerpolicy="no-referrer"
-            onerror="this.style.display='none';"
-            >`
-        : '';
-
-    // Format published_at and crawl_date
-    const publishedDate = article.published_at ? new Date(article.published_at) : null;
-    const crawlDate = article.crawl_date ? new Date(article.crawl_date) : null;
-
-    const publishedDateString = publishedDate ? publishedDate.toLocaleDateString('vi-VN') : 'N/A';
-    const crawlDateString = crawlDate ? crawlDate.toLocaleDateString('vi-VN') : 'N/A';
-
-    // Determine if it's "new news"
-    let newNewsIndicatorHtml = '';
-    // Giả sử "gần với" là cùng ngày.
-    if (publishedDate && crawlDate && publishedDate.toDateString() === crawlDate.toDateString()) {
-        newNewsIndicatorHtml = '<div class="new-news-indicator"><span>Tin mới</span></div>'; // Thêm chữ "Tin mới" vào đây
-    }
+    const publishedDate = article.published_at ?
+        new Date(article.published_at).toLocaleDateString('vi-VN') : 'N/A';
 
     const isSaved = savedArticleIds.has(article.article_id);
-
-    // Use a solid icon (fas) if saved, otherwise a regular one (far)
-    const saveIconClass = isSaved ? 'bi bi-bookmark-fill' : 'bi bi-bookmark';
+    const saveIconClass = isSaved ? 'bi-bookmark-fill' : 'bi-bookmark';
     const saveIconTitle = isSaved ? 'Bỏ lưu bài viết' : 'Lưu bài viết';
     const saveContainerClass = isSaved ? 'saved' : '';
 
+    // --- 2. Xây dựng các thành phần HTML ---
+    const imageHtml = article.image_url ?
+        `<img src="${article.image_url}" class="card-img-top" alt="${article.title.substring(0, 50)}" referrerpolicy="no-referrer" onerror="this.style.display='none';">` :
+        `<div class="card-img-top bg-light d-flex align-items-center justify-content-center text-muted"><i class="bi bi-image" style="font-size: 3rem;"></i></div>`;
+
     const saveIconHtml = `
         <div class="save-icon-container ${saveContainerClass}" data-article-id="${article.article_id}" title="${saveIconTitle}">
-            <i class="${saveIconClass} save-icon"></i>
-        </div>
-    `;
+            <i class="bi ${saveIconClass} save-icon"></i>
+        </div>`;
 
+    // --- 3. Kết hợp thành thẻ hoàn chỉnh ---
+    // THAY ĐỔI: Thêm data-url và xóa thẻ <a> ở cuối
     return `
-        <div class="card article-card shadow-sm position-relative" data-article-id-wrapper="${article.article_id}"> 
-            ${newNewsIndicatorHtml} ${sentimentIndicatorHtml}
-            <div class="card-body">
-                <div class="d-flex align-items-start">
-                    ${imageHtml}
-                    <div class="flex-grow-1">
-                        <h5 class="card-title">${article.title}</h5>
-                        <p class="card-subtitle mb-2 text-muted small">
-                            <strong>Nguồn:</strong> ${article.source?.source_name || 'N/A'} | 
-                            <strong>Ngày xuất bản:</strong> ${publishedDateString} |
-                            <strong>Ngày cập nhật:</strong> ${crawlDateString}
-                        </p>
-                        <p class="card-text small">${(article.content || '').substring(0, 200)}...</p>
+        <div class="col-lg-4 mb-4">
+            <div class="card article-card shadow-sm h-100" data-article-id-wrapper="${article.article_id}" data-url="${article.url}">
+                ${imageHtml}
+                <div class="card-body d-flex flex-column">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="d-flex align-items-center">
+                            ${sentimentIndicatorHtml}
+                            ${categoryName ? `<span class="badge bg-primary-subtle text-primary-emphasis ms-2">${categoryName}</span>` : ''}
+                        </div>
+                        <small class="text-muted">${publishedDate}</small>
+                    </div>
+                    <h5 class="card-title fw-bold">${article.title}</h5>
+                    <p class="card-text small text-muted">${(article.content || '').substring(0, 120)}...</p>
+                    <div class="small text-muted mt-2">
+                        <strong>Nguồn:</strong> ${article.source?.source_name || 'N/A'}
+                    </div>
+                    <div class="mt-auto pt-3 d-flex justify-content-between align-items-end">
+                        <div class="keywords-footer-container">
+                            ${keywordsHtml}
+                        </div>
+                        ${saveIconHtml}
                     </div>
                 </div>
-                <div class="d-flex justify-content-between align-items-end mt-3">
-                    <div class="tags-container">${categoryHtml}${keywordsHtml}</div>
-                    ${saveIconHtml} 
-                </div>
-                <a href="${article.url}" target="_blank" class="stretched-link" title="Đọc bài viết gốc"></a>
-            </div>
-        </div>
-    `;
+            </div>
+        </div>
+    `;
+}
+
+// Cần đảm bảo hàm createSentimentIndicator cũng được cập nhật trong file này
+function createSentimentIndicator(sentiment) {
+    if (!sentiment) return '';
+    let sentimentClass = '';
+    switch (sentiment.toLowerCase()) {
+        case 'positive': sentimentClass = 'sentiment-positive'; break;
+        case 'negative': sentimentClass = 'sentiment-negative'; break;
+        case 'neutral':  sentimentClass = 'sentiment-neutral'; break;
+        default: return '';
+    }
+    // Chỉ trả về div, không cần title vì nó đã đi cùng danh mục
+    return `<div class="sentiment-indicator ${sentimentClass}"></div>`;
 }

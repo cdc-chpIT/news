@@ -17,7 +17,6 @@ document.addEventListener('DOMContentLoaded', () => {
         dom.header.innerHTML = createHeader('Article Analysis Dashboard');
         dom.navbar.innerHTML = createNavbar('news');
         dom.filterSidebar.innerHTML = createFilterSidebar();
-        // --- FIX IS HERE: Call initializeAuthUI which is now async ---
         initializeAuthUI();
 
         filterDom = {
@@ -291,6 +290,23 @@ document.addEventListener('DOMContentLoaded', () => {
             const suggestionTarget = e.target.closest('.suggestion-item');
             const removeKeywordBtn = e.target.closest('.selected-keyword-tag .btn-close');
             const saveContainerTarget = e.target.closest('.save-icon-container');
+            const cardTarget = e.target.closest('.article-card');
+            // 1. Ưu tiên xử lý nút LƯU
+            if (saveContainerTarget) {
+                e.preventDefault(); // Ngăn chặn mọi hành vi mặc định khác
+                handleSaveToggle(saveContainerTarget);
+                return; // Dừng xử lý tại đây
+            }
+
+            // 2. Nếu không phải nút Lưu, xử lý nhấp chuột vào THẺ
+            if (cardTarget) {
+                e.preventDefault();
+                const url = cardTarget.dataset.url;
+                if (url) {
+                    window.open(url, '_blank');
+                }
+            }
+
 
             if (saveContainerTarget) {
                 e.preventDefault(); // Prevent link navigation

@@ -164,15 +164,14 @@ body {
 
 /* === CÁC CHỈ BÁO TRÊN THẺ (INDICATORS) === */
 .sentiment-indicator {
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
-    width: 14px;
-    height: 14px;
+    position: static; /* Bỏ định vị tuyệt đối */
+    width: 12px;
+    height: 12px;
     border-radius: 50%;
-    border: 2px solid white;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.25);
-    z-index: 10;
+    flex-shrink: 0; /* Ngăn nó bị co lại */
+    display: inline-block;
+    border: none; /* Bỏ border để trông gọn hơn khi ở cạnh text */
+    box-shadow: none; /* Bỏ shadow */
 }
 
 .sentiment-positive { background-color: #198754; }
@@ -198,18 +197,31 @@ body {
 
 /* === ICON LƯU BÀI VIẾT (SAVE ICON) === */
 .save-icon-container {
-    position: absolute;
-    bottom: 10px;
-    right: 15px;
-    z-index: 10;
-    cursor: pointer;
+    position: static; /* Quan trọng: Bỏ định vị tuyệt đối */
     font-size: 1.5rem;
     color: #6c757d;
+    cursor: pointer;
+    flex-shrink: 0; /* Ngăn không cho icon bị co lại */
 }
 
+/* 2. Giữ lại màu sắc khi hover và đã lưu */
+.save-icon-container.saved .save-icon,
 .save-icon-container .save-icon:hover {
-    color: #007bff;
+    color: #0d6efd; /* Đổi thành màu xanh dương cho nhất quán */
 }
+
+/* 3. Định kiểu cho vùng chứa từ khóa ở cuối thẻ */
+.keywords-footer-container {
+    flex-grow: 1; /* Cho phép nó chiếm không gian còn lại */
+    overflow: hidden;
+    margin-right: 1rem; /* Tạo khoảng cách với nút lưu */
+    max-height: 52px; /* Giới hạn chiều cao khoảng 2 dòng tag */
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+}
+
+
 
 
 /* === XÁC THỰC & TÀI KHOẢN NGƯỜI DÙNG === */
@@ -383,4 +395,27 @@ body {
 
 .ts-control.has-items > input {
     display: none !important;
+}
+
+.article-card {
+    display: flex;
+    flex-direction: column; 
+}
+
+.article-card .card-img-top {
+    height: 200px;
+    object-fit: cover; 
+    width: 100%;
+}
+
+.article-card .card-title {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-height: 2.5em; 
+}
+
+.article-card .card-body {
+    flex-grow: 1; 
 }
