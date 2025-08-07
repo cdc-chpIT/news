@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // === DOM ELEMENTS ===
     const dom = {
         header: document.getElementById('header-container'),
-        mainSidebar: document.getElementById('main-sidebar-container'),
+        navbar: document.getElementById('navbar-container'),
         alertContainer: document.getElementById('alert-container'),
         statsContainer: document.getElementById('stats-container'),
         sentimentOverTimeCanvas: document.getElementById('sentimentOverTimeChart'),
@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderLayout() {
         dom.header.innerHTML = createHeader('Dashboard');
-        dom.mainSidebar.innerHTML = createSidebar('dashboard');
+        dom.navbar.innerHTML = createNavbar('dashboard'); 
         initializeAuthUI(); 
 
     }

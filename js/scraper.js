@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // === DOM ELEMENTS ===
     const dom = {
         header: document.getElementById('header-container'),
-        mainSidebar: document.getElementById('main-sidebar-container'),
+        navbar: document.getElementById('navbar-container'),
         alertContainer: document.getElementById('alert-container'),
         resultsContainer: document.getElementById('scrape-results-container'),
         paginationContainer: document.getElementById('pagination-container'),
@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // === RENDER FUNCTIONS ===
     function renderLayout() {
         dom.header.innerHTML = createHeader('Mua sắm công');
-        dom.mainSidebar.innerHTML = createSidebar('scraper');
+        dom.navbar.innerHTML = createNavbar('scraper');
         initializeAuthUI(); 
     }
 

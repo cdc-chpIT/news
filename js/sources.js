@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // === DOM ELEMENTS ===
     const dom = {
         header: document.getElementById('header-container'),
-        mainSidebar: document.getElementById('main-sidebar-container'),
+        navbar: document.getElementById('navbar-container'),
         tableBody: document.getElementById('sourcesTableBody'),
         paginationControls: document.getElementById('pagination-controls'),
         addSourceBtn: document.getElementById('addSourceBtn'),
@@ -68,7 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // === RENDER FUNCTIONS ===
     function renderLayout() {
         dom.header.innerHTML = createHeader('Quản lý Nguồn tin');
-        dom.mainSidebar.innerHTML = createSidebar('sources');
+        dom.navbar.innerHTML = createNavbar('sources');
                 initializeAuthUI(); 
 
     }

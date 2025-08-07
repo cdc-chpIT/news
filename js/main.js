@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // === DOM ELEMENTS ===
     const dom = {
         header: document.getElementById('header-container'),
-        mainSidebar: document.getElementById('main-sidebar-container'),
+        navbar: document.getElementById('navbar-container'),
         filterSidebar: document.getElementById('filter-sidebar-container'),
         articlesList: document.getElementById('articles-list'),
         paginationControls: document.getElementById('pagination-controls'),
@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderLayout() {
         dom.header.innerHTML = createHeader('Article Analysis Dashboard');
-        dom.mainSidebar.innerHTML = createSidebar('news');
+        dom.navbar.innerHTML = createNavbar('news');
         dom.filterSidebar.innerHTML = createFilterSidebar();
         // --- FIX IS HERE: Call initializeAuthUI which is now async ---
         initializeAuthUI();

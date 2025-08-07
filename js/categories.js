@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // === DOM ELEMENTS ===
     const dom = {
         header: document.getElementById('header-container'),
-        mainSidebar: document.getElementById('main-sidebar-container'),
+        navbar: document.getElementById('navbar-container'),
         tableBody: document.getElementById('categoriesTableBody'),
         paginationControls: document.getElementById('pagination-controls'),
         addCategoryBtn: document.getElementById('addCategoryBtn'),
@@ -45,7 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // === RENDER FUNCTIONS ===
     function renderLayout() {
         dom.header.innerHTML = createHeader('Quản lý Danh mục');
-        dom.mainSidebar.innerHTML = createSidebar('categories');
+        dom.navbar.innerHTML = createNavbar('categories');
         initializeAuthUI(); 
 
     }

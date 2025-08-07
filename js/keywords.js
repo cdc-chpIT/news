@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // === DOM ELEMENTS ===
     const dom = {
         header: document.getElementById('header-container'),
-        mainSidebar: document.getElementById('main-sidebar-container'),
+        navbar: document.getElementById('navbar-container'),
         keywordsContainer: document.getElementById('keywords-by-category-container'),
         addKeywordBtn: document.getElementById('addKeywordBtn'),
         searchInput: document.getElementById('searchInput'),
@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // === RENDER FUNCTIONS ===
     function renderLayout() {
         dom.header.innerHTML = createHeader('Quản lý Từ khóa');
-        dom.mainSidebar.innerHTML = createSidebar('keywords');
+        dom.navbar.innerHTML = createNavbar('keywords');
                 initializeAuthUI(); 
 
     }

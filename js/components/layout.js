@@ -1,53 +1,47 @@
+// updated file: cdc-chpit/news/news-91ffb72db5ca0a8bb43a3078e9c3d4f3a9879c66/js/components/layout.js
 function createHeader(title) {
     return `
-        <div class="bg-white p-3 shadow-sm border-bottom d-flex justify-content-between align-items-center">
-            <h1 class="h4 mb-0">${title}</h1>
-            <div class="d-flex align-items-center gap-3">
-                <div id="auth-status-container"></div>
+        <div class="top-header p-2 shadow-sm d-flex justify-content-between align-items-center">
+            <a href="index.html" class="logo-link d-flex align-items-center text-decoration-none text-white">
+                <img src="images/CHP_Logo.png" alt="CHP Logo" style="height: 80px; width:140px; margin-right: 15px;">
+            </a>
+            <div class="flex-grow-1 text-center">
+                <h1 class="h4 mb-0 fw-bold text-uppercase text-white">${title}</h1>
             </div>
+            <div id="auth-status-container"></div>
         </div>
     `;
 }
 
-function createSidebar(activePage = 'dashboard') {
-    // Get the current user and check if they are the admin
+function createNavbar(activePage = 'dashboard') {
     const currentUser = getCurrentUser();
     const adminEmail = 'cdc@chp-holdings.com';
     const isAdmin = currentUser && currentUser.email === adminEmail;
 
     const allPages = [
-        { id: 'dashboard', href: 'index.html', icon: 'bi-grid-fill', text: 'Dashboard' },
-        { id: 'news', href: 'news.html', icon: 'bi-newspaper', text: 'Tin Tức' },
-        { id: 'scraper', href: 'scraper.html', icon: 'bi-funnel-fill', text: 'Mua sắm công' },
-        { id: 'keywords', href: 'keywords.html', icon: 'bi-tags-fill', text: 'Quản lý Từ khóa', adminOnly: true },
-        { id: 'categories', href: 'categories.html', icon: 'bi-bookmark-fill', text: 'Quản lý Danh mục', adminOnly: true },
-        { id: 'sources', href: 'sources.html', icon: 'bi-newspaper', text: 'Quản lý Nguồn tin', adminOnly: true },
+        { id: 'dashboard', href: 'index.html', text: 'Dashboard' },
+        { id: 'news', href: 'news.html', text: 'Tin Tức' },
+        { id: 'scraper', href: 'scraper.html', text: 'Mua sắm công' },
+        { id: 'keywords', href: 'keywords.html', text: 'Quản lý Từ khóa', adminOnly: true },
+        { id: 'categories', href: 'categories.html', text: 'Quản lý Danh mục', adminOnly: true },
+        { id: 'sources', href: 'sources.html', text: 'Quản lý Nguồn tin', adminOnly: true },
     ];
-
-    // Only include pages that are not admin-only, or if the user is an admin
+    
     const visiblePages = allPages.filter(page => !page.adminOnly || isAdmin);
 
     const links = visiblePages.map(page => `
         <li class="nav-item">
-            <a href="${page.href}" class="nav-link ${page.id === activePage ? 'active' : ''}">
-                <i class="bi ${page.icon} me-2"></i>
+            <a href="${page.href}" class="nav-link px-3 py-2 ${page.id === activePage ? 'active' : ''}">
                 ${page.text}
             </a>
         </li>
     `).join('');
 
     return `
-        <div class="main-sidebar d-flex flex-column flex-shrink-0 p-3 bg-light">
-            <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto link-dark text-decoration-none">
-                <i class="bi bi-robot me-2" style="font-size: 2rem;"></i>
-                <span class="fs-4">Article Analysis</span>
-            </a>
-            <hr>
-            <ul class="nav nav-pills flex-column mb-auto">
+        <div class="main-navbar">
+            <ul class="nav">
                 ${links}
             </ul>
-            <hr>
-
         </div>
     `;
 }
