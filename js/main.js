@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let tomSelectInstances = {};
 
     function renderLayout() {
-        dom.header.innerHTML = createHeader('Article Analysis Dashboard');
+        dom.header.innerHTML = createHeader('Tin tức');
         dom.navbar.innerHTML = createNavbar('news');
         dom.filterSidebar.innerHTML = createFilterSidebar();
         initializeAuthUI();
