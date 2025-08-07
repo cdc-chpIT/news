@@ -135,9 +135,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 delete params.filter_value;
             }
             const result = await apiService.fetchSources(params);
+            
+            // SỬA LỖI: Đọc dữ liệu từ cấu trúc phẳng mới
             if (result && result.success && Array.isArray(result.data)) {
-                const totalItems = result.total !== undefined ? result.total : result.data.length;
-                renderTable(result.data, totalItems);
+                const totalItems = result.total;       // Lấy tổng từ result.total
+                const sources = result.data;           // Lấy danh sách từ result.data
+
+                renderTable(sources, totalItems);
                 dom.paginationControls.innerHTML = createPagination({ page: state.page, pages: Math.ceil(totalItems / state.size) });
             } else {
                 renderTable([], 0);
@@ -151,6 +155,7 @@ document.addEventListener('DOMContentLoaded', () => {
             updateSortIcons();
         }
     }
+
     
  async function fetchSourceForEdit(id) {
         // Gọi thẳng đến API lấy 1 record bằng ID

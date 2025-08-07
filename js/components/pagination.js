@@ -11,8 +11,11 @@ function createPagination(paginationData) {
 
     const windowSize = 2;
     let html = '<ul class="pagination pagination-sm">';
+    
+    // Nút Lùi « (bị vô hiệu hóa ở trang 1)
     html += createPageItem(currentPage - 1, '&laquo;', false, currentPage === 1);
 
+    // Logic hiển thị trang đầu và dấu "..."
     if (currentPage > windowSize + 1) {
         html += createPageItem(1);
         if (currentPage > windowSize + 2) {
@@ -20,10 +23,12 @@ function createPagination(paginationData) {
         }
     }
 
+    // Vòng lặp chính để hiển thị các số trang xung quanh trang hiện tại
     for (let i = Math.max(1, currentPage - windowSize); i <= Math.min(totalPages, currentPage + windowSize); i++) {
         html += createPageItem(i, i, i === currentPage);
     }
 
+    // Logic hiển thị trang cuối và dấu "..."
     if (currentPage < totalPages - windowSize) {
         if (currentPage < totalPages - windowSize - 1) {
             html += createEllipsisItem();
@@ -31,6 +36,7 @@ function createPagination(paginationData) {
         html += createPageItem(totalPages);
     }
     
+    // Nút Tiến » (bị vô hiệu hóa ở trang cuối)
     html += createPageItem(currentPage + 1, '&raquo;', false, currentPage === totalPages);
     html += '</ul>';
     return html;
