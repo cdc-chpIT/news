@@ -35,7 +35,7 @@ function createSentimentIndicator(sentiment) {
 
 
 function createArticleCard(article) {
-    // --- 1. Dữ liệu chuẩn bị (không đổi) ---
+    // --- Data preparation (no changes) ---
     const categoryName = article.category ? article.category.name : '';
     const keywordsHtml = (article.keywords || [])
         .map(kw => `<span class="badge bg-light text-dark border me-1 clickable-keyword" data-keyword-id="${kw.keyword_id}" data-keyword-text="${kw.keyword_text}">${kw.keyword_text}</span>`)
@@ -47,17 +47,16 @@ function createArticleCard(article) {
     const saveIconTitle = isSaved ? 'Bỏ lưu bài viết' : 'Lưu bài viết';
     const saveContainerClass = isSaved ? 'saved' : '';
 
-    // --- 2. Xây dựng các thành phần HTML (ĐÃ CẬP NHẬT) ---
+    // --- HTML generation (no changes) ---
     const imageHtml = article.image_url ?
         `<img src="${article.image_url}" class="card-img-top" alt="${article.title.substring(0, 50)}" referrerpolicy="no-referrer" onerror="this.style.display='none';">` :
         `<div class="card-img-top bg-light d-flex align-items-center justify-content-center text-muted"><i class="bi bi-image" style="font-size: 3rem;"></i></div>`;
-
     const saveIconHtml = `
         <div class="save-icon-container ${saveContainerClass}" data-article-id="${article.article_id}" title="${saveIconTitle}">
             <i class="bi ${saveIconClass} save-icon"></i>
         </div>`;
 
-    // --- 3. Kết hợp thành thẻ hoàn chỉnh (ĐÃ SỬA LỖI) ---
+    // --- Final card assembly (FIX IS HERE) ---
     return `
         <div class="col-lg-4 mb-4">
             <div class="card article-card shadow-sm h-100" data-article-id-wrapper="${article.article_id}">
@@ -65,24 +64,26 @@ function createArticleCard(article) {
                 <a href="${article.url}" target="_blank" rel="noopener noreferrer" title="Mở bài viết trong tab mới">
                     ${imageHtml}
                 </a>
+                
 
                 <div class="card-body d-flex flex-column">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <div class="d-flex align-items-center">
-                            ${sentimentIndicatorHtml}
-                            ${categoryName ? `<span class="badge bg-primary-subtle text-primary-emphasis ms-2">${categoryName}</span>` : ''}
-                        </div>
-                        <small class="text-muted">${publishedDate}</small>
-                    </div>
-                    
-                    <h5 class="card-title fw-bold">${article.title}</h5>
+                                                            <small class="text-muted mb-3">
+                                                <strong>Ngày đăng:</strong>
+                                            ${publishedDate}
+                                            </small>
 
+                    <div class="d-flex align-items-center mb-1">
+                        ${sentimentIndicatorHtml}
+                        ${categoryName ? `<span class="badge bg-primary-subtle text-primary-emphasis ms-2">${categoryName}</span>` : ''}
+                    </div>
+                    <h5 class="card-title fw-bold">${article.title}</h5>
                     <p class="card-text small text-muted mt-2">${(article.content || '').substring(0, 120)}...</p>
                     
                     <div class="mt-auto pt-3">
                         <div class="small text-muted mb-2">
                             <strong>Nguồn:</strong> ${article.source?.source_name || 'N/A'}
                         </div>
+
                         <div class="d-flex justify-content-between align-items-end">
                             <div class="keywords-footer-container">
                                 ${keywordsHtml}
