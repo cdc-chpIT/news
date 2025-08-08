@@ -236,7 +236,7 @@ function injectSavedItemsModal() {
                                 <div class="col-md-6"><select id="saved-article-sort" class="form-select"><option value="saved_at_desc">Lưu gần đây nhất</option><option value="published_at_desc">Ngày xuất bản (mới nhất)</option><option value="published_at_asc">Ngày xuất bản (cũ nhất)</option></select></div>
                                 <div class="col-md-6"><select id="saved-article-sentiment" class="form-select"><option value="">Tất cả sắc thái</option><option value="positive">Tích cực</option><option value="negative">Tiêu cực</option><option value="neutral">Trung tính</option></select></div>
                             </div>
-                            <div id="saved-articles-list" class="vstack gap-3"></div>
+                            <div id="saved-articles-list" class="row"></div>
                         </div>
                         <div class="tab-pane fade" id="saved-procurements-pane" role="tabpanel" aria-labelledby="saved-procurements-tab" tabindex="0">
                              <!-- Saved Procurements Content -->
