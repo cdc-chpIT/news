@@ -210,7 +210,7 @@ function setupEventListeners() {
                 const result = await apiService.getProcurementLinks([{ kind, code }]);
                 const finalLink = result?.data?.[0]?.link;
 
-                if (finalLink && finalLink !== "https://muasamcong.mpi.gov.vn/") {
+                if (finalLink) {
                     window.open(finalLink, '_blank');
                     linkCell.innerHTML = `<a href="${finalLink}" target="_blank" class="btn btn-sm btn-success" title="Đã mở link">${code}</a>`;
                 } else {
