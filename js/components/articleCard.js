@@ -35,23 +35,19 @@ function createSentimentIndicator(sentiment) {
 
 
 function createArticleCard(article) {
-    // --- 1. Chuẩn bị dữ liệu (giữ nguyên) ---
+    // --- 1. Dữ liệu chuẩn bị (không đổi) ---
     const categoryName = article.category ? article.category.name : '';
     const keywordsHtml = (article.keywords || [])
-        .map(kw => `<span class="badge bg-light text-dark border me-1">${kw.keyword_text}</span>`)
+        .map(kw => `<span class="badge bg-light text-dark border me-1 clickable-keyword" data-keyword-id="${kw.keyword_id}" data-keyword-text="${kw.keyword_text}">${kw.keyword_text}</span>`)
         .join('');
-
     const sentimentIndicatorHtml = createSentimentIndicator(article.sentiment);
-
-    const publishedDate = article.published_at ?
-        new Date(article.published_at).toLocaleDateString('vi-VN') : 'N/A';
-
+    const publishedDate = article.published_at ? new Date(article.published_at).toLocaleDateString('vi-VN') : 'N/A';
     const isSaved = savedArticleIds.has(article.article_id);
     const saveIconClass = isSaved ? 'bi-bookmark-fill' : 'bi-bookmark';
     const saveIconTitle = isSaved ? 'Bỏ lưu bài viết' : 'Lưu bài viết';
     const saveContainerClass = isSaved ? 'saved' : '';
 
-    // --- 2. Xây dựng các thành phần HTML ---
+    // --- 2. Xây dựng các thành phần HTML (ĐÃ CẬP NHẬT) ---
     const imageHtml = article.image_url ?
         `<img src="${article.image_url}" class="card-img-top" alt="${article.title.substring(0, 50)}" referrerpolicy="no-referrer" onerror="this.style.display='none';">` :
         `<div class="card-img-top bg-light d-flex align-items-center justify-content-center text-muted"><i class="bi bi-image" style="font-size: 3rem;"></i></div>`;
@@ -61,12 +57,15 @@ function createArticleCard(article) {
             <i class="bi ${saveIconClass} save-icon"></i>
         </div>`;
 
-    // --- 3. Kết hợp thành thẻ hoàn chỉnh ---
-    // THAY ĐỔI: Thêm data-url và xóa thẻ <a> ở cuối
+    // --- 3. Kết hợp thành thẻ hoàn chỉnh (ĐÃ SỬA LỖI) ---
     return `
         <div class="col-lg-4 mb-4">
-            <div class="card article-card shadow-sm h-100" data-article-id-wrapper="${article.article_id}" data-url="${article.url}">
-                ${imageHtml}
+            <div class="card article-card shadow-sm h-100" data-article-id-wrapper="${article.article_id}">
+                
+                <a href="${article.url}" target="_blank" rel="noopener noreferrer" title="Mở bài viết trong tab mới">
+                    ${imageHtml}
+                </a>
+
                 <div class="card-body d-flex flex-column">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <div class="d-flex align-items-center">
@@ -75,16 +74,21 @@ function createArticleCard(article) {
                         </div>
                         <small class="text-muted">${publishedDate}</small>
                     </div>
+                    
                     <h5 class="card-title fw-bold">${article.title}</h5>
-                    <p class="card-text small text-muted">${(article.content || '').substring(0, 120)}...</p>
-                    <div class="small text-muted mt-2">
-                        <strong>Nguồn:</strong> ${article.source?.source_name || 'N/A'}
-                    </div>
-                    <div class="mt-auto pt-3 d-flex justify-content-between align-items-end">
-                        <div class="keywords-footer-container">
-                            ${keywordsHtml}
+
+                    <p class="card-text small text-muted mt-2">${(article.content || '').substring(0, 120)}...</p>
+                    
+                    <div class="mt-auto pt-3">
+                        <div class="small text-muted mb-2">
+                            <strong>Nguồn:</strong> ${article.source?.source_name || 'N/A'}
                         </div>
-                        ${saveIconHtml}
+                        <div class="d-flex justify-content-between align-items-end">
+                            <div class="keywords-footer-container">
+                                ${keywordsHtml}
+                            </div>
+                            ${saveIconHtml}
+                        </div>
                     </div>
                 </div>
             </div>

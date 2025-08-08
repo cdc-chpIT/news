@@ -55,59 +55,76 @@ document.addEventListener('DOMContentLoaded', () => {
         dom.alertContainer.prepend(alertDiv);
     }
 
-    async function renderTableAndFetchLinks(scrapedData) {
+function renderTableAndFetchLinks(scrapedData) {
         const table = scrapedData.data[0];
-        const idColumnHeader = state.procurementType === 'plan' ? 'Mã KHLCNT' : 'Mã TBMT';
-        
-        const newHeaders = [...table.headers];
-        newHeaders[0] = 'Tên dự án';
-        newHeaders.unshift(idColumnHeader);
-        newHeaders.push('Link', 'Lưu');
+        const itemType = state.procurementType === 'plan' ? 'khlcnt' : 'tbmt';
+        const codeHeader = itemType === 'khlcnt' ? 'Mã KHLCNT' : 'Mã TBMT';
 
-        const headersHtml = newHeaders.map(h => `<th>${h}</th>`).join('');
+        const headers = ['Lưu', codeHeader, 'Tên dự án', 'Mã đơn vị', 'Bên mời thầu', 'Ngày đăng tải', 'Đóng thầu'];
+        const headersHtml = headers.map(h => `<th>${h}</th>`).join('');
 
         const rowsData = table.rows.map(row => {
             const firstCell = row[0] || '';
-            // const codeMatch = firstCell.match(/^([A-Z0-9-]+)/);
-            const code = firstCell.slice(0, 15);
-            const rest = firstCell.length > 15 ? firstCell.slice(15).trim() : '';
-            const description = firstCell.substring(code.length).trim();    
-            const procuringEntity = row[1] || '';
+            const code = firstCell.slice(0, 15).trim();
+            const description = firstCell.substring(code.length).trim();
+            
+            const rawProcuringEntity = row[1] || '';
+            let entityId = '';
+            let entityName = rawProcuringEntity;
+
+            const match = rawProcuringEntity.match(/^([a-zA-Z0-9]*\d)(.*)/);
+            if (match) {
+                entityId = match[1];
+                entityName = match[2].trim();
+            }
+
             const publishedDateStr = row[2] || '';
-            const originalCells = row.slice(1);
-            return { code, description, procuringEntity, publishedDateStr, originalCells };
+            const closingDateStr = row[3] || 'N/A';
+            return { code, description, entityId, entityName, publishedDateStr, closingDateStr, itemType };
         });
 
-        const getLinkButton = `<button class="btn btn-sm btn-outline-primary get-link-btn" title="Mở link gốc"><i class="bi bi-box-arrow-up-right"></i></button>`;
-
-        const initialRowsHtml = rowsData.map(r => {
-            // This logic correctly sets the green icon if the item is saved
+        const rowsHtml = rowsData.map(r => {
             const isSaved = savedProcurements.has(r.code);
             const saveIconClass = isSaved ? 'bi-bookmark-check-fill text-success' : 'bi-bookmark';
             const saveTitle = isSaved ? 'Bỏ lưu' : 'Lưu tin';
             const userProcurementId = isSaved ? savedProcurements.get(r.code) : '';
             
-            const saveButton = `
-                <button class="btn btn-sm btn-light save-procurement-btn" 
+            const saveButtonHtml = `
+                <button class="btn btn-light save-procurement-btn" 
                         title="${saveTitle}"
                         data-item-code="${r.code}"
                         data-project-name="${r.description.replace(/"/g, '&quot;')}"
-                        data-procuring-entity="${r.procuringEntity.replace(/"/g, '&quot;')}"
+                        data-procuring-entity="${r.entityName.replace(/"/g, '&quot;')}"
                         data-published-at="${r.publishedDateStr}"
                         data-is-saved="${isSaved}"
                         data-procurement-id="${userProcurementId}">
                     <i class="bi ${saveIconClass}"></i>
                 </button>`;
 
-            const cells = [r.code, r.description, ...r.originalCells, getLinkButton, saveButton].map(cell => `<td>${cell}</td>`).join('');
-            return `<tr>${cells}</tr>`;
+            // --- SỬA LỖI: Di chuyển class và data-attributes từ <tr> sang <td> Tên dự án ---
+            return `
+                <tr>
+                    <td class="text-center">${saveButtonHtml}</td>
+                    <td>${r.code}</td>
+                    <td class="project-name-link" 
+                        data-item-code="${r.code.slice(0, 12)}" 
+                        data-kind="${r.itemType}" 
+                        title="Nhấn để mở link gốc">
+                        ${r.description}
+                    </td>
+                    <td>${r.entityId}</td>
+                    <td>${r.entityName}</td>
+                    <td>${r.publishedDateStr}</td>
+                    <td>${r.closingDateStr}</td>
+                </tr>
+            `;
         }).join('');
 
         dom.resultsContainer.innerHTML = `
             <div class="table-responsive">
-                <table class="table table-bordered table-striped table-hover">
+                <table class="table table-hover table-bordered procurement-table">
                     <thead class="table-light"><tr>${headersHtml}</tr></thead>
-                    <tbody>${initialRowsHtml}</tbody>
+                    <tbody>${rowsHtml}</tbody>
                 </table>
             </div>`;
     }
@@ -180,113 +197,103 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // === EVENT LISTENERS ===
 function setupEventListeners() {
-    dom.procurementTypeRadios.forEach(radio => radio.addEventListener('change', handleTypeChange));
+        dom.procurementTypeRadios.forEach(radio => radio.addEventListener('change', handleTypeChange));
 
-    dom.paginationContainer.addEventListener('click', (e) => {
-        e.preventDefault();
-        const pageLink = e.target.closest('[data-page]');
-        if (!pageLink || pageLink.parentElement.classList.contains('disabled')) return;
-        const pageNumber = parseInt(pageLink.dataset.page, 10);
-        if (pageNumber !== state.currentPage) executeScrape(pageNumber);
-    });
-
-    dom.resultsContainer.addEventListener('click', async (e) => {
-        const getLinkBtn = e.target.closest('.get-link-btn');
-        const saveBtn = e.target.closest('.save-procurement-btn');
-
-        // --- KHỐI MÃ CHO NÚT "LẤY LINK" (ĐÃ PHỤC HỒI) ---
-        if (getLinkBtn) {
+        dom.paginationContainer.addEventListener('click', (e) => {
             e.preventDefault();
-            const row = getLinkBtn.closest('tr');
-            const code1 = row.cells[0].textContent;
-            const code = String(code1.slice(0, 12));
-            const linkCell = getLinkBtn.parentElement;
-            
-            getLinkBtn.disabled = true;
-            getLinkBtn.innerHTML = `<span class="spinner-border spinner-border-sm"></span>`;
-            
-            const kind = state.procurementType === 'plan' ? 'khlcnt' : 'tbmt';
-            try {
-                const result = await apiService.getProcurementLinks([{ kind, code }]);
-                const finalLink = result?.data?.[0]?.link;
+            const pageLink = e.target.closest('[data-page]');
+            if (!pageLink || pageLink.parentElement.classList.contains('disabled')) return;
+            const pageNumber = parseInt(pageLink.dataset.page, 10);
+            if (pageNumber !== state.currentPage) executeScrape(pageNumber);
+        });
 
-                if (finalLink) {
-                    window.open(finalLink, '_blank');
-                    linkCell.innerHTML = `<a href="${finalLink}" target="_blank" class="btn btn-sm btn-success" title="Đã mở link">${code}</a>`;
-                } else {
-                    throw new Error('Không lấy được link chi tiết từ API.');
+        dom.resultsContainer.addEventListener('click', async (e) => {
+            const saveBtn = e.target.closest('.save-procurement-btn');
+            
+            if (saveBtn) {
+                e.preventDefault();
+                // ... logic xử lý nút Lưu (giữ nguyên không thay đổi)
+                if (!getCurrentUser()) {
+                    showAlert('Vui lòng đăng nhập để sử dụng tính năng này.', 'warning'); return;
                 }
-            } catch (error) {
-                showAlert('Không thể lấy link. ' + error.message, 'danger');
-                getLinkBtn.disabled = false;
-                getLinkBtn.innerHTML = `<i class="bi bi-box-arrow-up-right"></i>`;
-            }
-        }
-
-        // --- KHỐI MÃ CHO NÚT "LƯU" (VẪN GIỮ NGUYÊN) ---
-        if (saveBtn) {
-            e.preventDefault();
-            if (!getCurrentUser()) {
-                showAlert('Vui lòng đăng nhập để sử dụng tính năng này.', 'warning');
+                const { itemCode, projectName, procuringEntity, publishedAt, isSaved, procurementId } = saveBtn.dataset;
+                const itemType = state.procurementType === 'plan' ? 'khlcnt' : 'tbmt';
+                saveBtn.disabled = true;
+                saveBtn.innerHTML = `<span class="spinner-border spinner-border-sm"></span>`;
+                try {
+                    if (isSaved === 'true') {
+                        await apiService.deleteUserProcurement(procurementId);
+                        savedProcurements.delete(itemCode);
+                        showAlert('Đã bỏ lưu tin thành công.', 'info');
+                        saveBtn.dataset.isSaved = 'false';
+                        saveBtn.title = 'Lưu tin';
+                    } else {
+                        const linkResult = await apiService.getProcurementLinks([{ kind: itemType, code: itemCode.slice(0,12) }]);
+                        const finalLink = linkResult?.data?.[0]?.link;
+                        // if (finalLink) { throw new Error("Không thể lấy được link chi tiết. Vui lòng thử lại."); }
+                        const payload = { item_code: itemCode, item_type: itemType, project_name: projectName, procuring_entity: procuringEntity, published_at: parseApiDate(publishedAt), original_link: finalLink };
+                        const result = await apiService.saveUserProcurement(payload);
+                        if (result.success && result.data) {
+                            savedProcurements.set(itemCode, result.data.user_procurement_id);
+                            saveBtn.dataset.procurementId = result.data.user_procurement_id;
+                        }
+                        showAlert('Lưu tin thành công.', 'success');
+                        saveBtn.dataset.isSaved = 'true';
+                        saveBtn.title = 'Bỏ lưu';
+                    }
+                } catch (error) {
+                    showAlert(error.message, 'danger');
+                    saveBtn.dataset.isSaved = isSaved;
+                    saveBtn.title = isSaved === 'true' ? 'Bỏ lưu' : 'Lưu tin';
+                } finally {
+                    saveBtn.disabled = false;
+                    const icon = saveBtn.querySelector('i') || document.createElement('i');
+                    icon.className = saveBtn.dataset.isSaved === 'true' ? 'bi bi-bookmark-check-fill text-success' : 'bi bi-bookmark';
+                    saveBtn.innerHTML = '';
+                    saveBtn.appendChild(icon);
+                }
                 return;
             }
+            
+            // --- SỬA LỖI: Lắng nghe sự kiện click trên ô có class "project-name-link" ---
+            const linkCell = e.target.closest('.project-name-link');
+            if (linkCell) {
+                e.preventDefault();
+                const { itemCode, kind } = linkCell.dataset;
+                
+                // --- PHẦN CẢI TIẾN: HIỂN THỊ LOADING SPINNER ---
+                
+                // 1. Lưu lại nội dung HTML gốc của ô
+                const originalContent = linkCell.innerHTML;
+                
+                // 2. Tạm thời vô hiệu hóa việc click lại và hiển thị spinner
+                linkCell.style.pointerEvents = 'none';
+                linkCell.innerHTML = `
+                    <div class="d-flex align-items-center">
+                        <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        <span>Đang lấy link...</span>
+                    </div>
+                `;
 
-            const { itemCode, projectName, procuringEntity, publishedAt, isSaved, procurementId } = saveBtn.dataset;
-            const itemType = state.procurementType === 'plan' ? 'khlcnt' : 'tbmt';
+                try {
+                    const result = await apiService.getProcurementLinks([{ kind, code: itemCode }]);
+                    const finalLink = result?.data?.[0]?.link;
 
-            saveBtn.disabled = true;
-            saveBtn.innerHTML = `<span class="spinner-border spinner-border-sm"></span>`;
-
-            try {
-                if (isSaved === 'true') {
-                    await apiService.deleteUserProcurement(procurementId);
-                    savedProcurements.delete(itemCode);
-                    showAlert('Đã bỏ lưu tin thành công.', 'info');
-                    saveBtn.dataset.isSaved = 'false';
-                    saveBtn.title = 'Lưu tin';
-                } else {
-                    const apiCode = itemCode.slice(0, 12);
-                    const kind = state.procurementType === 'plan' ? 'khlcnt' : 'tbmt';
-                    const linkResult = await apiService.getProcurementLinks([{ kind, code: apiCode }]);
-                    const finalLink = linkResult?.data?.[0]?.link;
-                    
-                    if (!finalLink || finalLink === "https://muasamcong.mpi.gov.vn/") {
-                        throw new Error("Không thể lấy được link chi tiết. Vui lòng thử lại.");
+                    if (finalLink) {
+                        window.open(finalLink, '_blank');
+                    } else {
+                        throw new Error('Không lấy được link chi tiết từ API.');
                     }
-
-                    const payload = {
-                        item_code: itemCode,
-                        item_type: itemType,
-                        project_name: projectName,
-                        procuring_entity: procuringEntity,
-                        published_at: parseApiDate(publishedAt),
-                        original_link: finalLink
-                    };
-
-                    const result = await apiService.saveUserProcurement(payload);
-                    if (result.success && result.data) {
-                        savedProcurements.set(itemCode, result.data.user_procurement_id);
-                        saveBtn.dataset.procurementId = result.data.user_procurement_id;
-                        showAlert('Lưu tin thành công.', 'success');
-                    }
-                    
-                    saveBtn.dataset.isSaved = 'true';
-                    saveBtn.title = 'Bỏ lưu';
+                } catch (error) {
+                    showAlert('Không thể lấy link. ' + error.message, 'danger');
+                } finally {
+                    // 3. Khôi phục lại nội dung và cho phép click trở lại
+                    linkCell.innerHTML = originalContent;
+                    linkCell.style.pointerEvents = 'auto';
                 }
-            } catch (error) {
-                showAlert(error.message, 'danger');
-                saveBtn.dataset.isSaved = isSaved;
-                saveBtn.title = isSaved === 'true' ? 'Bỏ lưu' : 'Lưu tin';
-            } finally {
-                saveBtn.disabled = false;
-                const icon = saveBtn.querySelector('i') || document.createElement('i');
-                icon.className = saveBtn.dataset.isSaved === 'true' ? 'bi bi-bookmark-check-fill text-success' : 'bi bi-bookmark';
-                saveBtn.innerHTML = '';
-                saveBtn.appendChild(icon);
             }
-        }
-    });
-}
+        });
+    }
 
     // === INITIALIZATION ===
     function initialize() {

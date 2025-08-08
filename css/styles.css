@@ -447,3 +447,94 @@ body {
 .btn-login-google:hover {
     background-color: #afafaf;
 }
+
+/* === PROCUREMENT CARD STYLES === */
+.procurement-card {
+    position: relative;
+    cursor: pointer;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    border-left: 4px solid #0d6efd; /* Blue accent line */
+}
+
+.procurement-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.12) !important;
+}
+
+.procurement-card .card-title {
+    font-weight: 600;
+    padding-right: 45px; /* Make space for the save button */
+}
+
+.procurement-card .card-body {
+    padding: 1.25rem;
+}
+
+/* Position the save button at the top right corner */
+.procurement-card .save-procurement-btn {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    z-index: 10;
+    font-size: 1.2rem;
+}
+
+/* Loading overlay for getting link */
+.procurement-card .loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 20;
+    border-radius: var(--bs-card-inner-border-radius);
+}
+
+/* === PROCUREMENT TABLE STYLES === */
+
+/* Thay đổi con trỏ và thêm hiệu ứng gạch chân khi di chuột vào Tên dự án */
+.procurement-table .project-name-link {
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.procurement-table .project-name-link:hover {
+    text-decoration: underline;
+    color: #0d6efd; /* Đổi màu chữ sang xanh dương khi hover */
+}
+
+/* Vertically align content in all cells for a cleaner look */
+.procurement-table td {
+    vertical-align: middle;
+}
+
+/* Style for the main project name to make it stand out */
+.procurement-table .project-name {
+    font-weight: 600;
+}
+
+/* Vertically align content in all cells for a cleaner look */
+.procurement-table td {
+    vertical-align: middle;
+}
+
+.procurement-table th:nth-child(2),
+.procurement-table td:nth-child(2) {
+    min-width: 180px;      /* Đảm bảo cột có chiều rộng tối thiểu */
+    white-space: nowrap;   /* Ngăn không cho văn bản xuống dòng */
+    width: 1%;             /* Ưu tiên co giãn cho các cột khác trước */
+}
+
+.clickable-keyword {
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.clickable-keyword:hover {
+    background-color: #e9ecef !important; /* Slightly darker background on hover */
+    border-color: #dee2e6 !important;
+}

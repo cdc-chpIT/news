@@ -43,45 +43,65 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- REFACTORED AND FIXED FUNCTION ---
-    async function handleSaveToggle(saveContainer) {
+async function handleSaveToggle(saveContainer) {
         const articleId = parseInt(saveContainer.dataset.articleId, 10);
         if (!articleId) return;
 
-        // Disable button to prevent multiple clicks
-        saveContainer.style.pointerEvents = 'none';
         const icon = saveContainer.querySelector('.save-icon');
-        const isSaved = saveContainer.classList.contains('saved');
+        const isCurrentlySaved = saveContainer.classList.contains('saved');
 
-        try {
-            if (isSaved) {
-                // --- Unsave Action ---
+        // Vô hiệu hóa nút tạm thời để tránh click nhiều lần
+        saveContainer.style.pointerEvents = 'none';
+
+        if (isCurrentlySaved) {
+            // --- HÀNH ĐỘNG BỎ LƯU (UNSAVE) ---
+
+            // 1. Cập nhật UI ngay lập tức (giả định thành công)
+            saveContainer.classList.remove('saved');
+            icon.classList.replace('bi-bookmark-fill', 'bi-bookmark');
+            saveContainer.title = 'Lưu bài viết';
+            savedArticleIds.delete(articleId); // Cập nhật state local
+
+            try {
+                // 2. Gọi API trong nền
                 await apiService.unsaveArticle(articleId);
-                savedArticleIds.delete(articleId); // Update state
-                // Update UI immediately
-                saveContainer.classList.remove('saved');
-                icon.classList.remove('bi-bookmark-fill');
-                icon.classList.add('bi-bookmark');
-                saveContainer.title = 'Lưu bài viết';
-            } else {
-                // --- Save Action ---
-                await apiService.saveArticle(articleId);
-                savedArticleIds.add(articleId); // Update state
-                // Update UI immediately
+            } catch (error) {
+                // 3. Nếu API thất bại, khôi phục lại UI và state
+                showAlert('Lỗi khi bỏ lưu bài viết. Vui lòng thử lại.', 'danger');
                 saveContainer.classList.add('saved');
-                icon.classList.remove('bi-bookmark');
-                icon.classList.add('bi-bookmark-fill');
+                icon.classList.replace('bi-bookmark', 'bi-bookmark-fill');
                 saveContainer.title = 'Bỏ lưu bài viết';
+                savedArticleIds.add(articleId); // Khôi phục state local
             }
-        } catch (error) {
-            if (error.message.includes('401') || error.message.toLowerCase().includes('validate credentials')) {
-                 showAlert('Vui lòng đăng nhập để lưu bài viết.', 'warning');
-            } else {
-                 showAlert(`Lỗi: ${error.message}`, 'danger');
+
+        } else {
+            // --- HÀNH ĐỘNG LƯU (SAVE) ---
+
+            // 1. Cập nhật UI ngay lập tức (giả định thành công)
+            saveContainer.classList.add('saved');
+            icon.classList.replace('bi-bookmark', 'bi-bookmark-fill');
+            saveContainer.title = 'Bỏ lưu bài viết';
+            savedArticleIds.add(articleId); // Cập nhật state local
+
+            try {
+                // 2. Gọi API trong nền
+                await apiService.saveArticle(articleId);
+            } catch (error) {
+                // 3. Nếu API thất bại, khôi phục lại UI và state
+                if (error.message.includes('401') || error.message.toLowerCase().includes('validate credentials')) {
+                    showAlert('Vui lòng đăng nhập để lưu bài viết.', 'warning');
+                } else {
+                    showAlert(`Lỗi khi lưu bài viết: ${error.message}`, 'danger');
+                }
+                saveContainer.classList.remove('saved');
+                icon.classList.replace('bi-bookmark-fill', 'bi-bookmark');
+                saveContainer.title = 'Lưu bài viết';
+                savedArticleIds.delete(articleId); // Khôi phục state local
             }
-        } finally {
-            // Re-enable button after action
-            saveContainer.style.pointerEvents = 'auto';
         }
+
+        // Luôn luôn kích hoạt lại nút sau khi hoàn tất
+        saveContainer.style.pointerEvents = 'auto';
     }
 
     async function fetchAndRenderArticles() {
@@ -285,6 +305,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function addEventListeners() {
         document.body.addEventListener('click', e => {
+            const keywordTarget = e.target.closest('.clickable-keyword');
+            if (keywordTarget) {
+                e.preventDefault();
+                e.stopPropagation(); // Ngăn các sự kiện click khác (nếu có)
+                const keywordId = keywordTarget.dataset.keywordId;
+                const keywordText = keywordTarget.dataset.keywordText;
+                
+                if (keywordId && keywordText) {
+                    // Gọi hàm addKeyword đã có sẵn để xử lý logic lọc
+                    addKeyword(keywordId, keywordText);
+                }
+                return; // Dừng lại sau khi xử lý
+            }
+
             const tagTarget = e.target.closest('.tag');
             const pageLinkTarget = e.target.closest('a.page-link');
             const suggestionTarget = e.target.closest('.suggestion-item');
@@ -299,13 +333,13 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // 2. Nếu không phải nút Lưu, xử lý nhấp chuột vào THẺ
-            if (cardTarget) {
-                e.preventDefault();
-                const url = cardTarget.dataset.url;
-                if (url) {
-                    window.open(url, '_blank');
-                }
-            }
+            // if (cardTarget) {
+            //     e.preventDefault();
+            //     const url = cardTarget.dataset.url;
+            //     if (url) {
+            //         window.open(url, '_blank');
+            //     }
+            // }
 
 
             if (saveContainerTarget) {
