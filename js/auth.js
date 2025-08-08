@@ -606,15 +606,9 @@ async function populateEmailSettingsForm() {
     availableKeywordsArea.innerHTML = `<div class="text-center"><div class="spinner-border spinner-border-sm"></div></div>`;
     selectedKeywordsContainer.innerHTML = '';
 
+    // FIX: Step 1 - Fetch schedule separately as it can fail for new users
     try {
-        const [scheduleResult, categoriesResult, allKeywordsResult, userKeywordsResult] = await Promise.all([
-            apiService.fetchUserSchedule(),
-            apiService.fetchCategories(),
-            apiService.fetchKeywords({ limit: 1000 }), 
-            apiService.fetchUserKeywords()
-        ]);
-
-        // Populate schedule settings
+        const scheduleResult = await apiService.fetchUserSchedule();
         if (scheduleResult.success && scheduleResult.data) {
             const { is_active, days_of_week, time_of_day } = scheduleResult.data;
             document.getElementById('emailScheduleActive').checked = is_active;
@@ -628,13 +622,24 @@ async function populateEmailSettingsForm() {
                 });
             }
         }
+    } catch (error) {
+        // Silently fail if schedule is not found, or log the error for debugging.
+        console.warn("Could not fetch user schedule (this is expected for new users):", error.message);
+    }
 
-        // Populate keywords
+    // FIX: Step 2 - Fetch keywords and categories, which are essential for the UI
+    try {
+        const [categoriesResult, allKeywordsResult, userKeywordsResult] = await Promise.all([
+            apiService.fetchCategories(),
+            apiService.fetchKeywords({ limit: 1000 }), 
+            apiService.fetchUserKeywords()
+        ]);
+
+        // Populate keywords (The rest of the logic remains the same)
         const categories = categoriesResult.success ? categoriesResult.data : [];
         const allKeywords = allKeywordsResult.success ? allKeywordsResult.data : [];
         const userKeywords = userKeywordsResult.success ? userKeywordsResult.data : [];
         
-        // FIX: Match by keyword_text and create maps for efficient lookup
         const userKeywordTexts = new Set(userKeywords.map(kw => kw.keyword_text));
         const userKeywordCustomIdMap = new Map(userKeywords.map(kw => [kw.keyword_text, kw.custom_keyword_id]));
 
@@ -719,12 +724,9 @@ async function populateEmailSettingsForm() {
         availableKeywordsArea.innerHTML = availableKeywordsHtml || '<p class="text-muted">Không có từ khóa nào để chọn.</p>';
 
     } catch (error) {
-        const isNotFoundError = error.message && error.message.includes("Notification schedule not set for this user");
-        if (!isNotFoundError) {
-            console.error("An unexpected error occurred while fetching user settings:", error);
-            alertContainer.innerHTML = `<div class="alert alert-danger">Lỗi không xác định khi tải cài đặt.</div>`;
-            availableKeywordsArea.innerHTML = `<div class="alert alert-warning">Không thể tải danh sách từ khóa.</div>`;
-        }
+        console.error("An unexpected error occurred while fetching keywords/categories:", error);
+        alertContainer.innerHTML = `<div class="alert alert-danger">Lỗi không xác định khi tải cài đặt.</div>`;
+        availableKeywordsArea.innerHTML = `<div class="alert alert-warning">Không thể tải danh sách từ khóa.</div>`;
     }
 }
 
