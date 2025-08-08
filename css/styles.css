@@ -436,3 +436,14 @@ body {
 .article-card .card-body {
     flex-grow: 1; 
 }
+
+.btn-login-google {
+    background-color: #ffffff;
+    color: #343a40;
+    border: 1px solid #ced4da;
+    font-weight: 500;
+}
+
+.btn-login-google:hover {
+    background-color: #afafaf;
+}
