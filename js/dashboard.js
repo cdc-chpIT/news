@@ -13,11 +13,52 @@ document.addEventListener('DOMContentLoaded', () => {
         sentimentPeriodBtns: document.querySelectorAll('.sentiment-period-btn'),
         topCategoriesLimitSelect: document.getElementById('topCategoriesLimitSelect'),
         topKeywordsLimitSelect: document.getElementById('topKeywordsLimitSelect'),
-        sendEmailBtn: document.getElementById('send-email-btn'), // Thêm nút gửi email
+        crawlBtn: document.getElementById('crawl-articles-btn'), // Cập nhật để sử dụng crawlBtn
+        sendEmailBtn: document.getElementById('send-email-btn'),
     };
 
-    // To hold the chart instances for updates/destruction
     let sentimentOverTimeChart, topCategoriesChart, topKeywordsChart, sentimentDistributionChart;
+
+    // === CRAWL STATE MANAGEMENT ===
+    const CRAWL_STATE_KEY = 'crawl_status';
+    const CRAWL_TIMEOUT_MS = 5 * 60 * 1000; // 5 phút
+
+    function manageCrawlButtonState() {
+        if (!dom.crawlBtn) return;
+
+        const originalHtml = `<i class="bi bi-arrow-clockwise me-2"></i>Cập nhật dữ liệu`;
+        const loadingHtml = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Đang xử lý...`;
+
+        try {
+            const crawlStatusStr = sessionStorage.getItem(CRAWL_STATE_KEY);
+            if (!crawlStatusStr) {
+                dom.crawlBtn.disabled = false;
+                dom.crawlBtn.innerHTML = originalHtml;
+                return;
+            }
+
+            const crawlStatus = JSON.parse(crawlStatusStr);
+            const elapsedTime = Date.now() - crawlStatus.startTime;
+
+            if (crawlStatus.active && elapsedTime < CRAWL_TIMEOUT_MS) {
+                dom.crawlBtn.disabled = true;
+                dom.crawlBtn.innerHTML = loadingHtml;
+            } else {
+                sessionStorage.removeItem(CRAWL_STATE_KEY);
+                dom.crawlBtn.disabled = false;
+                dom.crawlBtn.innerHTML = originalHtml;
+                if (crawlStatus.active) {
+                    showAlert('Quá trình cập nhật trước đó có thể đã hoàn tất.', 'info');
+                }
+            }
+        } catch (error) {
+            console.error('Lỗi quản lý trạng thái nút crawl:', error);
+            sessionStorage.removeItem(CRAWL_STATE_KEY);
+            dom.crawlBtn.disabled = false;
+            dom.crawlBtn.innerHTML = originalHtml;
+        }
+    }
+
 
     // === RENDER FUNCTIONS ===
 
@@ -63,8 +104,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderSentimentDistributionChart(distribution) {
         if (!dom.sentimentDistributionCanvas) return;
         
-        // --- FIX IS HERE ---
-        // Destroy the previous chart instance if it exists
         if (sentimentDistributionChart) {
             sentimentDistributionChart.destroy();
         }
@@ -154,7 +193,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // === DATA FETCH AND UPDATE LOGIC ===
     async function refreshAllData() {
         try {
-            // Fetch data for stat cards and distribution chart
             const [stats, distribution] = await Promise.all([
                 apiService.fetchDashboardStats(),
                 apiService.fetchSentimentDistribution()
@@ -163,7 +201,6 @@ document.addEventListener('DOMContentLoaded', () => {
             renderStatsCards(stats);
             renderSentimentDistributionChart(distribution);
 
-            // Refresh other charts
             updateSentimentOverTimeChart(document.querySelector('.sentiment-period-btn.active').dataset.period);
             updateTopCategories(dom.topCategoriesLimitSelect.value);
             updateTopKeywords(dom.topKeywordsLimitSelect.value);
@@ -204,7 +241,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             dom.sentimentPeriodBtns.forEach(btn => btn.classList.toggle('active', btn.dataset.period === period));
         } catch (error) {
-            console.error(`Error fetching sentiment over time for period ${period}:`, error);
+            console.error(`Lỗi tải dữ liệu sắc thái theo thời gian cho kỳ ${period}:`, error);
         }
     }
 
@@ -213,7 +250,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const categories = await apiService.fetchTopCategories(limit);
             renderTopCategoriesChart(categories);
         } catch (error) {
-            console.error('Failed to update top categories chart:', error);
+            console.error('Không thể cập nhật biểu đồ danh mục hàng đầu:', error);
         }
     }
 
@@ -222,7 +259,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const keywords = await apiService.fetchTopKeywords(limit);
             renderTopKeywordsChart(keywords);
         } catch (error) {
-            console.error('Failed to update top keywords chart:', error);
+            console.error('Không thể cập nhật biểu đồ từ khóa hàng đầu:', error);
         }
     }
 
@@ -243,28 +280,22 @@ document.addEventListener('DOMContentLoaded', () => {
             updateTopKeywords(e.target.value);
         });
         
-        const crawlBtn = document.getElementById('crawl-articles-btn');
-        if (crawlBtn) {
-            crawlBtn.addEventListener('click', async () => {
-                const originalHtml = crawlBtn.innerHTML;
-                crawlBtn.disabled = true;
-                crawlBtn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Đang xử lý...`;
+        if (dom.crawlBtn) {
+            dom.crawlBtn.addEventListener('click', async () => {
+                const crawlStatus = {
+                    active: true,
+                    startTime: Date.now()
+                };
+                sessionStorage.setItem(CRAWL_STATE_KEY, JSON.stringify(crawlStatus));
+                manageCrawlButtonState();
 
                 try {
                     const result = await apiService.crawlArticles();
-                    showAlert(result.message || 'Yêu cầu cập nhật đã được gửi thành công! Dữ liệu sẽ được làm mới sau giây lát.', 'success');
-                    
-                    setTimeout(() => {
-                        refreshAllData();
-                    }, 3000); 
+                    showAlert(result.message || 'Yêu cầu cập nhật đã được gửi. Trang sẽ tự động làm mới sau một vài phút.', 'success');
                 } catch (error) {
                     showAlert(error.message, 'danger');
-                } finally {
-                    // Restore button after a delay to prevent spamming
-                    setTimeout(() => {
-                        crawlBtn.disabled = false;
-                        crawlBtn.innerHTML = originalHtml;
-                    }, 3000);
+                    sessionStorage.removeItem(CRAWL_STATE_KEY);
+                    manageCrawlButtonState();
                 }
             });
         }
@@ -272,7 +303,6 @@ document.addEventListener('DOMContentLoaded', () => {
             dom.sendEmailBtn.addEventListener('click', async () => {
                 const originalHtml = dom.sendEmailBtn.innerHTML;
                 dom.sendEmailBtn.disabled = true;
-                // Cập nhật text của nút
                 dom.sendEmailBtn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Đang tổng hợp & gửi...`;
 
                 try {
@@ -293,11 +323,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // === INITIALIZATION ===
     async function initialize() {
         renderLayout();
+        manageCrawlButtonState(); // Kiểm tra trạng thái ban đầu khi tải trang
+        setInterval(manageCrawlButtonState, 5000); // Kiểm tra định kỳ (để xử lý timeout)
         setupEventListeners();
 
         dom.statsContainer.innerHTML = '<div class="text-center p-5"><div class="spinner-border"></div></div>';
         
-        // Initial load
         try {
             const [stats, distribution] = await Promise.all([
                 apiService.fetchDashboardStats(),
@@ -314,7 +345,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
              dom.statsContainer.innerHTML = '';
              showAlert(`Không thể tải dữ liệu dashboard. Vui lòng thử lại. Lỗi: ${error.message}`, 'danger');
-             console.error("Dashboard initialization failed:", error);
+             console.error("Khởi tạo dashboard thất bại:", error);
         }
     }
 

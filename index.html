@@ -32,32 +32,6 @@
                     </div>
 
                 <div class="row">
-                    <div class="col-xl-8 mb-4">
-                        <div class="card chart-card shadow-sm h-100">
-                            <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                                <h6 class="mb-0">Biến động sắc thái</h6>
-                                <div class="btn-group btn-group-sm" role="group" aria-label="Time period">
-                                    <button type="button" class="btn btn-outline-primary sentiment-period-btn active" data-period="day">Ngày</button>
-                                    <button type="button" class="btn btn-outline-primary sentiment-period-btn" data-period="week">Tuần</button>
-                                    <button type="button" class="btn btn-outline-primary sentiment-period-btn" data-period="month">Tháng</button>
-                                </div>
-                            </div>
-                            <div class="card-body" style="min-height: 400px;">
-                                <canvas id="sentimentOverTimeChart"></canvas>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-xl-4 mb-4">
-                        <div class="card chart-card shadow-sm h-100">
-                               <div class="card-body" style="min-height: 400px;">
-                                 <canvas id="sentimentDistributionChart"></canvas>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row">
                     <div class="col-lg-6 mb-4">
                         <div class="card chart-card shadow-sm h-100">
                             <div class="card-header bg-light d-flex justify-content-between align-items-center">
@@ -91,6 +65,32 @@
                                 <canvas id="topKeywordsChart" style="min-height: 400px;"></canvas>
                                </div>
                            </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-xl-8 mb-4">
+                        <div class="card chart-card shadow-sm h-100">
+                            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0">Biến động sắc thái</h6>
+                                <div class="btn-group btn-group-sm" role="group" aria-label="Time period">
+                                    <button type="button" class="btn btn-outline-primary sentiment-period-btn active" data-period="day">Ngày</button>
+                                    <button type="button" class="btn btn-outline-primary sentiment-period-btn" data-period="week">Tuần</button>
+                                    <button type="button" class="btn btn-outline-primary sentiment-period-btn" data-period="month">Tháng</button>
+                                </div>
+                            </div>
+                            <div class="card-body" style="min-height: 400px;">
+                                <canvas id="sentimentOverTimeChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-4 mb-4">
+                        <div class="card chart-card shadow-sm h-100">
+                               <div class="card-body" style="min-height: 400px;">
+                                 <canvas id="sentimentDistributionChart"></canvas>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
