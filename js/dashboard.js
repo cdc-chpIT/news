@@ -21,42 +21,74 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // === CRAWL STATE MANAGEMENT ===
     const CRAWL_STATE_KEY = 'crawl_status';
-    const CRAWL_TIMEOUT_MS = 5 * 60 * 1000; // 5 phút
+    const CRAWL_TIMEOUT_MS = 30 * 1000; // 30 giây
+    const CRAWL_SCHEDULED_KEY = 'crawl_scheduled_status'; 
+    const CRAWL_SCHEDULE_HOURS = [8, 12, 16];
 
     function manageCrawlButtonState() {
         if (!dom.crawlBtn) return;
 
         const originalHtml = `<i class="bi bi-arrow-clockwise me-2"></i>Cập nhật dữ liệu`;
         const loadingHtml = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Đang xử lý...`;
-
+        
+        let crawlStatus = null;
+        let isScheduledCrawlRunning = false;
+        
         try {
             const crawlStatusStr = sessionStorage.getItem(CRAWL_STATE_KEY);
-            if (!crawlStatusStr) {
-                dom.crawlBtn.disabled = false;
-                dom.crawlBtn.innerHTML = originalHtml;
-                return;
+            if (crawlStatusStr) {
+                crawlStatus = JSON.parse(crawlStatusStr);
             }
 
-            const crawlStatus = JSON.parse(crawlStatusStr);
-            const elapsedTime = Date.now() - crawlStatus.startTime;
-
-            if (crawlStatus.active && elapsedTime < CRAWL_TIMEOUT_MS) {
-                dom.crawlBtn.disabled = true;
-                dom.crawlBtn.innerHTML = loadingHtml;
-            } else {
-                sessionStorage.removeItem(CRAWL_STATE_KEY);
-                dom.crawlBtn.disabled = false;
-                dom.crawlBtn.innerHTML = originalHtml;
-                if (crawlStatus.active) {
-                    showAlert('Quá trình cập nhật trước đó đã hoàn tất.', 'info');
-                }
+            const scheduledCrawlStatusStr = sessionStorage.getItem(CRAWL_SCHEDULED_KEY);
+            if (scheduledCrawlStatusStr) {
+                isScheduledCrawlRunning = JSON.parse(scheduledCrawlStatusStr).active;
             }
         } catch (error) {
-            console.error('Lỗi quản lý trạng thái nút crawl:', error);
+            console.error('Lỗi khi đọc trạng thái crawl từ sessionStorage:', error);
             sessionStorage.removeItem(CRAWL_STATE_KEY);
+            sessionStorage.removeItem(CRAWL_SCHEDULED_KEY);
+            dom.crawlBtn.disabled = false;
+            dom.crawlBtn.innerHTML = originalHtml;
+            return;
+        }
+
+        const isManualCrawlActive = crawlStatus && crawlStatus.active && (Date.now() - crawlStatus.startTime < CRAWL_TIMEOUT_MS);
+        
+        if (isManualCrawlActive || isScheduledCrawlRunning) {
+            dom.crawlBtn.disabled = true;
+            dom.crawlBtn.innerHTML = loadingHtml;
+        } else {
             dom.crawlBtn.disabled = false;
             dom.crawlBtn.innerHTML = originalHtml;
         }
+        
+        // Dọn dẹp trạng thái đã hết hạn
+        if (crawlStatus && crawlStatus.active && (Date.now() - crawlStatus.startTime >= CRAWL_TIMEOUT_MS)) {
+            sessionStorage.removeItem(CRAWL_STATE_KEY);
+            showAlert('Quá trình cập nhật thủ công trước đó đã hoàn tất hoặc bị gián đoạn.', 'info');
+        }
+    }
+
+    // Hàm mới để kiểm tra lịch tự động và cập nhật trạng thái
+    function checkScheduledCrawl() {
+        const now = new Date();
+        const currentHour = now.getHours();
+        
+        // Kiểm tra xem giờ hiện tại có trùng với giờ chạy tác vụ tự động không
+        const isScheduledHour = CRAWL_SCHEDULE_HOURS.includes(currentHour);
+        const isScheduledMinute = now.getMinutes() >= 0 && now.getMinutes() <= 5; // Giả định tác vụ mất 5 phút để hoàn thành
+        
+        if (isScheduledHour && isScheduledMinute) {
+            // Nếu trong khung giờ chạy, đặt cờ là đang chạy
+            sessionStorage.setItem(CRAWL_SCHEDULED_KEY, JSON.stringify({ active: true }));
+        } else {
+            // Nếu không, xóa cờ
+            sessionStorage.removeItem(CRAWL_SCHEDULED_KEY);
+        }
+        
+        // Luôn gọi hàm quản lý trạng thái nút để cập nhật giao diện
+        manageCrawlButtonState();
     }
 
 
@@ -280,41 +312,29 @@ document.addEventListener('DOMContentLoaded', () => {
             updateTopKeywords(e.target.value);
         });
         
-        if (dom.crawlBtn) {
-        dom.crawlBtn.addEventListener('click', async () => {
-            // Đặt trạng thái nút sang đang tải ngay lập tức
-            const crawlStatus = { active: true, startTime: Date.now() };
-            sessionStorage.setItem(CRAWL_STATE_KEY, JSON.stringify(crawlStatus));
-            manageCrawlButtonState(); 
+         if (dom.crawlBtn) {
+            dom.crawlBtn.addEventListener('click', async () => {
+                // Đặt trạng thái nút sang đang tải ngay lập tức
+                const crawlStatus = { active: true, startTime: Date.now() };
+                sessionStorage.setItem(CRAWL_STATE_KEY, JSON.stringify(crawlStatus));
+                manageCrawlButtonState(); 
 
-            // Hiển thị một thông báo ban đầu, chính xác hơn
-            showAlert('Đang yêu cầu cập nhật dữ liệu từ máy chủ. Quá trình này có thể mất vài phút... Hãy ở lại trang để quá trình không bị gián đoạn', 'info');
+                showAlert('Đang yêu cầu cập nhật dữ liệu từ máy chủ. Quá trình này có thể mất vài phút...', 'info');
 
-            try {
-                // Lệnh gọi API sẽ chờ ở đây cho đến khi backend hoàn thành
-                await apiService.crawlArticles();
-                
-                // Khi thành công, hiển thị thông báo hoàn tất
-                showAlert('Dữ liệu đã được cập nhật thành công. Các số liệu trên trang sẽ được tự động làm mới.', 'success');
-                
-                // Tự động làm mới dữ liệu dashboard sau khi crawl thành công
-                await refreshAllData();
-
-            } catch (error) {
-                // Khi thất bại, hiển thị thông báo lỗi
-                showAlert(`Cập nhật dữ liệu thất bại: ${error.message}`, 'danger');
-            } finally {
-                // Khối này luôn chạy dù thành công hay thất bại
-                // Dọn dẹp trạng thái session và đặt lại giao diện nút
-                sessionStorage.removeItem(CRAWL_STATE_KEY);
-
-                // Một khoảng chờ ngắn để tránh việc thay đổi trạng thái nút quá đột ngột
-                setTimeout(() => {
-                    manageCrawlButtonState();
-                }, 500);
-            }
-        });
-    }
+                try {
+                    await apiService.crawlArticles();
+                    showAlert('Dữ liệu đã được cập nhật thành công. Các số liệu trên trang sẽ được tự động làm mới.', 'success');
+                    await refreshAllData();
+                } catch (error) {
+                    showAlert(`Cập nhật dữ liệu thất bại: ${error.message}`, 'danger');
+                } finally {
+                    sessionStorage.removeItem(CRAWL_STATE_KEY);
+                    setTimeout(() => {
+                        manageCrawlButtonState();
+                    }, 500);
+                }
+            });
+        }
         if (dom.sendEmailBtn) {
             dom.sendEmailBtn.addEventListener('click', async () => {
                 const originalHtml = dom.sendEmailBtn.innerHTML;
@@ -339,8 +359,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // === INITIALIZATION ===
     async function initialize() {
         renderLayout();
-        manageCrawlButtonState(); // Kiểm tra trạng thái ban đầu khi tải trang
-        setInterval(manageCrawlButtonState, 5000); // Kiểm tra định kỳ (để xử lý timeout)
+        checkScheduledCrawl();
+        manageCrawlButtonState();
+        setInterval(manageCrawlButtonState, 500);
+        setupEventListeners();
+
+        setInterval(checkScheduledCrawl, 30 * 1000); 
         setupEventListeners();
 
         dom.statsContainer.innerHTML = '<div class="text-center p-5"><div class="spinner-border"></div></div>';
