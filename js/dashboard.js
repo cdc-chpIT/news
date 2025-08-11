@@ -288,7 +288,7 @@ document.addEventListener('DOMContentLoaded', () => {
             manageCrawlButtonState(); 
 
             // Hiển thị một thông báo ban đầu, chính xác hơn
-            showAlert('Đang yêu cầu cập nhật dữ liệu từ máy chủ. Quá trình này có thể mất vài phút...', 'info');
+            showAlert('Đang yêu cầu cập nhật dữ liệu từ máy chủ. Quá trình này có thể mất vài phút... Hãy ở lại trang để quá trình không bị gián đoạn', 'info');
 
             try {
                 // Lệnh gọi API sẽ chờ ở đây cho đến khi backend hoàn thành
