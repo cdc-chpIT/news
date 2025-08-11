@@ -262,6 +262,7 @@ function injectSavedItemsModal() {
                                             <div class="form-check form-switch">
                                                 <input class="form-check-input" type="checkbox" role="switch" id="emailContentNews" checked>
                                                 <label class="form-check-label" for="emailContentNews">Tin tức cá nhân hóa</label>
+                                                <small class="text-danger ms-2 fst-italic">(Hãy chọn từ khoá phía dưới để nhận email tin tức)</small>
                                             </div>
                                             <div class="form-check form-switch">
                                                 <input class="form-check-input" type="checkbox" role="switch" id="emailContentProcurement" checked>
