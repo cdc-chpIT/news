@@ -281,24 +281,40 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         
         if (dom.crawlBtn) {
-            dom.crawlBtn.addEventListener('click', async () => {
-                const crawlStatus = {
-                    active: true,
-                    startTime: Date.now()
-                };
-                sessionStorage.setItem(CRAWL_STATE_KEY, JSON.stringify(crawlStatus));
-                manageCrawlButtonState();
+        dom.crawlBtn.addEventListener('click', async () => {
+            // Đặt trạng thái nút sang đang tải ngay lập tức
+            const crawlStatus = { active: true, startTime: Date.now() };
+            sessionStorage.setItem(CRAWL_STATE_KEY, JSON.stringify(crawlStatus));
+            manageCrawlButtonState(); 
 
-                try {
-                    const result = await apiService.crawlArticles();
-                    showAlert(result.message || 'Yêu cầu cập nhật đã được gửi. Trang sẽ tự động làm mới sau một vài phút.', 'success');
-                } catch (error) {
-                    showAlert(error.message, 'danger');
-                    sessionStorage.removeItem(CRAWL_STATE_KEY);
+            // Hiển thị một thông báo ban đầu, chính xác hơn
+            showAlert('Đang yêu cầu cập nhật dữ liệu từ máy chủ. Quá trình này có thể mất vài phút...', 'info');
+
+            try {
+                // Lệnh gọi API sẽ chờ ở đây cho đến khi backend hoàn thành
+                await apiService.crawlArticles();
+                
+                // Khi thành công, hiển thị thông báo hoàn tất
+                showAlert('Dữ liệu đã được cập nhật thành công. Các số liệu trên trang sẽ được tự động làm mới.', 'success');
+                
+                // Tự động làm mới dữ liệu dashboard sau khi crawl thành công
+                await refreshAllData();
+
+            } catch (error) {
+                // Khi thất bại, hiển thị thông báo lỗi
+                showAlert(`Cập nhật dữ liệu thất bại: ${error.message}`, 'danger');
+            } finally {
+                // Khối này luôn chạy dù thành công hay thất bại
+                // Dọn dẹp trạng thái session và đặt lại giao diện nút
+                sessionStorage.removeItem(CRAWL_STATE_KEY);
+
+                // Một khoảng chờ ngắn để tránh việc thay đổi trạng thái nút quá đột ngột
+                setTimeout(() => {
                     manageCrawlButtonState();
-                }
-            });
-        }
+                }, 500);
+            }
+        });
+    }
         if (dom.sendEmailBtn) {
             dom.sendEmailBtn.addEventListener('click', async () => {
                 const originalHtml = dom.sendEmailBtn.innerHTML;
