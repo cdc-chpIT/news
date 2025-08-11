@@ -168,6 +168,7 @@ function displaySavedArticles() {
         : '<div class="alert alert-info text-center">Không tìm thấy bài viết nào phù hợp.</div>';
 }
 
+
 /**
  * Filters and displays the saved procurement items in the modal.
  */
@@ -230,7 +231,6 @@ function injectSavedItemsModal() {
                     </ul>
                     <div class="tab-content pt-3" id="savedItemsTabContent">
                         <div class="tab-pane fade show active" id="saved-articles-pane" role="tabpanel" aria-labelledby="saved-articles-tab" tabindex="0">
-                            <!-- Saved Articles Content -->
                             <div class="row g-2 mb-3 p-2 border rounded bg-light">
                                 <div class="col-12"><input type="text" id="saved-article-search" class="form-control" placeholder="Tìm theo tiêu đề, nội dung..."></div>
                                 <div class="col-md-6"><select id="saved-article-sort" class="form-select"><option value="saved_at_desc">Lưu gần đây nhất</option><option value="published_at_desc">Ngày xuất bản (mới nhất)</option><option value="published_at_asc">Ngày xuất bản (cũ nhất)</option></select></div>
@@ -239,7 +239,6 @@ function injectSavedItemsModal() {
                             <div id="saved-articles-list" class="row"></div>
                         </div>
                         <div class="tab-pane fade" id="saved-procurements-pane" role="tabpanel" aria-labelledby="saved-procurements-tab" tabindex="0">
-                             <!-- Saved Procurements Content -->
                              <div class="row g-2 mb-3 p-2 border rounded bg-light">
                                 <div class="col-md-8"><input type="text" id="saved-procurement-search" class="form-control" placeholder="Tìm theo tên gói thầu..."></div>
                                 <div class="col-md-4"><select id="saved-procurement-sort" class="form-select"><option value="saved_at_desc">Lưu gần đây nhất</option><option value="published_at_desc">Ngày đăng (mới nhất)</option><option value="published_at_asc">Ngày đăng (cũ nhất)</option></select></div>
@@ -247,7 +246,6 @@ function injectSavedItemsModal() {
                             <div id="saved-procurements-list" class="vstack gap-3"></div>
                         </div>
                         <div class="tab-pane fade" id="email-settings-pane" role="tabpanel" aria-labelledby="email-settings-tab" tabindex="0">
-                            <!-- Email Settings Form -->
                             <form id="email-settings-form" onsubmit="return false;">
                                 <div id="email-settings-alert-container"></div>
                                 <p class="text-muted">Cấu hình hệ thống tự động gửi email tổng hợp tin tức mới theo lịch bạn chọn.</p>
@@ -258,6 +256,19 @@ function injectSavedItemsModal() {
                                 </div>
 
                                 <fieldset id="email-schedule-fieldset">
+                                    <div class="mb-4">
+                                        <label class="form-label fw-semibold">Nội dung email muốn nhận:</label>
+                                        <div class="vstack gap-2" id="email-content-options">
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" role="switch" id="emailContentNews" checked>
+                                                <label class="form-check-label" for="emailContentNews">Tin tức cá nhân hóa</label>
+                                            </div>
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" role="switch" id="emailContentProcurement" checked>
+                                                <label class="form-check-label" for="emailContentProcurement">Tổng hợp Mua sắm công</label>
+                                            </div>
+                                        </div>
+                                    </div>
                                     <div class="mb-3">
                                         <label class="form-label fw-semibold">Chọn ngày gửi trong tuần:</label>
                                         <div id="emailDaysOfWeek" class="d-flex flex-wrap gap-2">
@@ -292,12 +303,10 @@ function injectSavedItemsModal() {
                                         </div>
                                     </div>
                                     <div id="selected-keywords-container" class="email-keywords-list mb-3 p-3 bg-light rounded" style="min-height: 50px;">
-                                        <!-- Selected keywords will move here -->
-                                    </div>
+                                        </div>
                                     <hr>
                                     <div id="available-keywords-area">
-                                        <!-- Categorized keywords will be rendered here -->
-                                    </div>
+                                        </div>
                                 </fieldset>
                             </form>
                         </div>
@@ -464,7 +473,12 @@ function setupModalEventListeners(modalElement) {
 
     // Listen for the schedule active/inactive switch
     document.getElementById('emailScheduleActive')?.addEventListener('change', (e) => {
-        document.getElementById('email-schedule-fieldset').disabled = !e.target.checked;
+        const isChecked = e.target.checked;
+        document.getElementById('email-schedule-fieldset').disabled = !isChecked;
+        // Thêm logic để disable/enable các nút con
+        document.querySelectorAll('#email-content-options .form-check-input').forEach(input => {
+            input.disabled = !isChecked;
+        });
     });
 
     // Listen for clicks on unsave buttons (for articles and procurements)
@@ -606,23 +620,38 @@ async function populateEmailSettingsForm() {
     selectedKeywordsContainer.innerHTML = '';
 
     // FIX: Step 1 - Fetch schedule separately as it can fail for new users
-    try {
+     try {
         const scheduleResult = await apiService.fetchUserSchedule();
         if (scheduleResult.success && scheduleResult.data) {
-            const { is_active, days_of_week, time_of_day } = scheduleResult.data;
-            document.getElementById('emailScheduleActive').checked = is_active;
+            const { is_active, days_of_week, time_of_day, send_news_summary, send_procurement_summary } = scheduleResult.data;
+            const emailScheduleActive = document.getElementById('emailScheduleActive');
+            emailScheduleActive.checked = is_active;
             fieldset.disabled = !is_active;
+
+            const emailContentNews = document.getElementById('emailContentNews');
+            const emailContentProcurement = document.getElementById('emailContentProcurement');
+            
+            emailContentNews.checked = send_news_summary;
+            emailContentProcurement.checked = send_procurement_summary;
+
+            // Vô hiệu hóa các nút con nếu switch chính tắt
+            emailContentNews.disabled = !is_active;
+            emailContentProcurement.disabled = !is_active;
+
             document.getElementById('emailTimeOfDay').value = time_of_day || '';
+            
             if (days_of_week && Array.isArray(days_of_week)) {
+                // Reset all day checkboxes first
+                document.querySelectorAll('#emailDaysOfWeek .form-check-input').forEach(chk => chk.checked = false);
+                // Then check the ones from the API
                 days_of_week.forEach(day => {
                     const formattedDay = day.charAt(0).toUpperCase() + day.slice(1).toLowerCase();
-                    const dayCheckbox = form.querySelector(`input[value="${formattedDay}"]`);
+                    const dayCheckbox = document.querySelector(`input[value="${formattedDay}"]`);
                     if (dayCheckbox) dayCheckbox.checked = true;
                 });
             }
         }
     } catch (error) {
-        // Silently fail if schedule is not found, or log the error for debugging.
         console.warn("Could not fetch user schedule (this is expected for new users):", error.message);
     }
 
@@ -746,9 +775,11 @@ async function handleSaveEmailSettings(event) {
 
     try {
         const isActive = document.getElementById('emailScheduleActive').checked;
+        const sendNews = document.getElementById('emailContentNews').checked;
+        const sendProcurement = document.getElementById('emailContentProcurement').checked;
         
         const selectedDays = Array.from(document.querySelectorAll('#emailDaysOfWeek .form-check-input:checked'))
-                                  .map(chk => chk.value);
+                                  .map(chk => chk.value.toUpperCase());
         const timeOfDay = document.getElementById('emailTimeOfDay').value;
 
         if (isActive) {
@@ -762,8 +793,10 @@ async function handleSaveEmailSettings(event) {
 
         const payload = {
             is_active: isActive,
+            send_news_summary: sendNews,
+            send_procurement_summary: sendProcurement,
             days_of_week: selectedDays,
-            time_of_day: timeOfDay || ''
+            time_of_day: timeOfDay || '00:00'
         };
 
         const result = await apiService.updateUserSchedule(payload);

@@ -48,7 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 dom.crawlBtn.disabled = false;
                 dom.crawlBtn.innerHTML = originalHtml;
                 if (crawlStatus.active) {
-                    showAlert('Quá trình cập nhật trước đó có thể đã hoàn tất.', 'info');
+                    showAlert('Quá trình cập nhật trước đó đã hoàn tất.', 'info');
                 }
             }
         } catch (error) {
