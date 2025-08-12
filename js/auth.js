@@ -489,7 +489,7 @@ async function handleSaveAllSettings() {
         // Run both API calls in parallel
         const [scheduleResult, keywordsResult] = await Promise.allSettled([
             apiService.updateUserSchedule(schedulePayload),
-            apiService.setUserKeywords(keywordsPayload.length > 0 ? keywordsPayload : null)
+            apiService.setUserKeywords(keywordsPayload) 
         ]);
 
         const errors = [];
