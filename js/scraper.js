@@ -101,7 +101,6 @@ function renderTableAndFetchLinks(scrapedData) {
                     <i class="bi ${saveIconClass}"></i>
                 </button>`;
 
-            // --- SỬA LỖI: Di chuyển class và data-attributes từ <tr> sang <td> Tên dự án ---
             return `
                 <tr>
                     <td class="text-center">${saveButtonHtml}</td>
@@ -255,13 +254,10 @@ function setupEventListeners() {
                 return;
             }
             
-            // --- SỬA LỖI: Lắng nghe sự kiện click trên ô có class "project-name-link" ---
             const linkCell = e.target.closest('.project-name-link');
             if (linkCell) {
                 e.preventDefault();
-                const { itemCode, kind } = linkCell.dataset;
-                
-                // --- PHẦN CẢI TIẾN: HIỂN THỊ LOADING SPINNER ---
+                const { itemCode, kind } = linkCell.dataset;       
                 
                 // 1. Lưu lại nội dung HTML gốc của ô
                 const originalContent = linkCell.innerHTML;

@@ -1,3 +1,6 @@
+// TRONG FILE: cdc-chpit/news/news-8e796fbd241e197f2e46d36b22e2866019584d32/js/state.js
+
+// Thêm published_from và published_to vào trạng thái ban đầu
 let queryState = {
     search: '',
     sentiment: '',
@@ -7,27 +10,32 @@ let queryState = {
     sort_by: 'published_at',
     sort_order: 'desc',
     page: 1,
-    size: 9
+    size: 9,
+    published_from: '', 
+    published_to: ''   
 };
 
 let savedArticleIds = new Set();
 let savedProcurements = new Map();
-// Cập nhật trạng thái cho bộ lọc, luôn reset về trang 1
+
+// Cập nhật hàm updateQueryState để xử lý đúng
 function updateQueryState(updates, callback) {
     queryState = { ...queryState, ...updates, page: 1 };
     if (callback) callback();
 }
 
-// Cập nhật trạng thái chỉ cho phân trang
 function updatePageState(updates, callback) {
      queryState = { ...queryState, ...updates };
      if (callback) callback();
 }
 
+// Thêm published_from và published_to vào hàm reset
 function resetQueryState(callback) {
     queryState = {
         search: '', sentiment: '', category_id: null, source_id: null, crawl_keyword_id: [], 
-        sort_by: 'published_at', sort_order: 'desc', page: 1, size: 9
+        sort_by: 'published_at', sort_order: 'desc', page: 1, size: 9,
+        published_from: '', 
+        published_to: ''    
     };
     if (callback) callback();
 }

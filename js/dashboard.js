@@ -110,28 +110,64 @@ document.addEventListener('DOMContentLoaded', () => {
 
     }
 
-    function renderStatsCards(stats) {
-        const statCards = [
-            { title: 'Tổng số bài viết', value: stats.total_articles, icon: 'bi-file-earmark-text-fill', color: 'primary' },
-            { title: 'Bài viết hôm nay', value: stats.articles_today, icon: 'bi-calendar-event-fill', color: 'info' },
-            { title: 'Tổng số nguồn tin', value: stats.total_sources, icon: 'bi-newspaper', color: 'success' },
-            { title: 'Tổng số danh mục', value: stats.total_categories, icon: 'bi-bookmark-star-fill', color: 'warning' },
-        ];
+   function renderStatsCards(stats) {
+    const statCards = [
+        { id: 'total-articles', title: 'Tổng số bài viết', value: stats.total_articles, icon: 'bi-file-earmark-text-fill', color: 'primary' },
+        { id: 'articles-today', title: 'Bài viết hôm nay', value: stats.articles_today, icon: 'bi-calendar-event-fill', color: 'info' },
+        { id: 'total-sources', title: 'Tổng số nguồn tin', value: stats.total_sources, icon: 'bi-newspaper', color: 'success' },
+        { id: 'total-categories', title: 'Tổng số danh mục', value: stats.total_categories, icon: 'bi-bookmark-star-fill', color: 'warning' },
+    ];
 
-        dom.statsContainer.innerHTML = statCards.map(card => `
-            <div class="col-xl-3 col-md-6 mb-4">
-                <div class="card stat-card shadow-sm h-100">
-                    <div class="card-body">
-                        <div>
-                            <div class="stat-card-title text-uppercase">${card.title}</div>
-                            <div class="stat-card-value">${card.value.toLocaleString('vi-VN')}</div>
-                        </div>
-                        <i class="bi ${card.icon} stat-card-icon text-${card.color}"></i>
+    // Hàm tiện ích để lấy ngày hôm nay theo định dạng YYYY-MM-DD
+    const getTodayString = () => {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
+     dom.statsContainer.innerHTML = statCards.map(card => {
+        const cardHtml = `
+            <div class="card stat-card shadow-sm h-100">
+                <div class="card-body">
+                    <div>
+                        <div class="stat-card-title text-uppercase">${card.title}</div>
+                        <div class="stat-card-value">${card.value.toLocaleString('vi-VN')}</div>
                     </div>
+                    <i class="bi ${card.icon} stat-card-icon text-${card.color}"></i>
                 </div>
             </div>
-        `).join('');
-    }
+        `;
+
+        let cardWrapper;
+
+        switch (card.id) {
+            case 'total-articles':
+                // Bọc thẻ "Tổng số bài viết" trong một link đến news.html
+                cardWrapper = `<a href="news.html" class="text-decoration-none" title="Xem tất cả bài viết">${cardHtml}</a>`;
+                break;
+            
+            case 'articles-today':
+                if (card.value > 0) {
+                    const today = getTodayString();
+                    const url = `news.html?published_from=${today}`;
+                    cardWrapper = `<a href="${url}" class="text-decoration-none" title="Xem các bài viết từ hôm nay">${cardHtml}</a>`;
+                } else {
+                    cardWrapper = cardHtml; // Không thể click nếu không có bài viết
+                }
+                break;
+
+            default:
+                // Các thẻ còn lại không có link
+                cardWrapper = cardHtml;
+                break;
+        }
+
+        return `<div class="col-xl-3 col-md-6 mb-4">${cardWrapper}</div>`;
+
+    }).join('');
+}
 
     function renderSentimentDistributionChart(distribution) {
         if (!dom.sentimentDistributionCanvas) return;
@@ -180,17 +216,33 @@ document.addEventListener('DOMContentLoaded', () => {
                 }]
             },
             options: {
-                indexAxis: 'y',
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                    title: { display: true, text: `Top ${categories.length} Danh mục`, font: { size: 16 } }
-                },
-                scales: { x: { beginAtZero: true } }
-            }
-        });
-    }
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            // Thay đổi con trỏ chuột khi di vào thanh biểu đồ
+            onHover: (event, chartElement) => {
+                const canvas = event.native.target;
+                canvas.style.cursor = chartElement[0] ? 'pointer' : 'default';
+            },
+            // Xử lý sự kiện click
+            onClick: (event, elements) => {
+                if (elements.length > 0) {
+                    const clickedElementIndex = elements[0].index;
+                    const clickedCategory = categories[clickedElementIndex];
+                    if (clickedCategory) {
+                        // Điều hướng sang trang tin tức với tham số category_id
+                        window.location.href = `news.html?category_id=${clickedCategory.category_id}`;
+                    }
+                }
+            },
+            plugins: {
+                legend: { display: false },
+                title: { display: true, text: `Top ${categories.length} Danh mục`, font: { size: 16 } }
+            },
+            scales: { x: { beginAtZero: true } }
+        }
+    });
+}
 
     function renderTopKeywordsChart(keywords) {
         if (!dom.topKeywordsCanvas || !keywords) return;
@@ -213,6 +265,27 @@ document.addEventListener('DOMContentLoaded', () => {
                 indexAxis: 'y',
                 responsive: true,
                 maintainAspectRatio: false,
+                // Thay đổi con trỏ chuột khi di vào thanh biểu đồ để cho biết có thể click
+                onHover: (event, chartElement) => {
+                    const canvas = event.native.target;
+                    canvas.style.cursor = chartElement[0] ? 'pointer' : 'default';
+                },
+                // Xử lý sự kiện click
+                onClick: (event, elements) => {
+                    // `elements` là một mảng chứa các đối tượng được click
+                    if (elements.length > 0) {
+                        const clickedElementIndex = elements[0].index;
+                        const clickedKeyword = keywords[clickedElementIndex];
+                        
+                        if (clickedKeyword) {
+                            const keywordId = clickedKeyword.keyword_id;
+                            const keywordText = encodeURIComponent(clickedKeyword.keyword_text);
+                            
+                            // Điều hướng sang trang tin tức với tham số lọc
+                            window.location.href = `news.html?keyword_id=${keywordId}&keyword_text=${keywordText}`;
+                        }
+                    }
+                },
                 plugins: {
                     legend: { display: false },
                     title: { display: true, text: `Top ${keywords.length} Từ khóa`, font: { size: 16 } }

@@ -136,7 +136,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             const result = await apiService.fetchSources(params);
             
-            // SỬA LỖI: Đọc dữ liệu từ cấu trúc phẳng mới
             if (result && result.success && Array.isArray(result.data)) {
                 const totalItems = result.total;       // Lấy tổng từ result.total
                 const sources = result.data;           // Lấy danh sách từ result.data

@@ -13,6 +13,18 @@ document.addEventListener('DOMContentLoaded', () => {
     let selectedKeywords = [];
     let tomSelectInstances = {};
 
+    function showAlert(message, type = 'success') {
+        const alertContainer = document.getElementById('alert-container');
+        if (alertContainer) {
+            const alertHtml = `
+                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>`;
+            alertContainer.innerHTML = alertHtml;
+        }
+    }
+
     function renderLayout() {
         dom.header.innerHTML = createHeader('Tin tức');
         dom.navbar.innerHTML = createNavbar('news');
@@ -65,6 +77,7 @@ async function handleSaveToggle(saveContainer) {
             try {
                 // 2. Gọi API trong nền
                 await apiService.unsaveArticle(articleId);
+                showAlert('Đã bỏ lưu bài viết.', 'info');
             } catch (error) {
                 // 3. Nếu API thất bại, khôi phục lại UI và state
                 showAlert('Lỗi khi bỏ lưu bài viết. Vui lòng thử lại.', 'danger');
@@ -86,6 +99,7 @@ async function handleSaveToggle(saveContainer) {
             try {
                 // 2. Gọi API trong nền
                 await apiService.saveArticle(articleId);
+                showAlert('Đã lưu bài viết thành công!', 'success');
             } catch (error) {
                 // 3. Nếu API thất bại, khôi phục lại UI và state
                 if (error.message.includes('401') || error.message.toLowerCase().includes('validate credentials')) {
@@ -108,105 +122,13 @@ async function handleSaveToggle(saveContainer) {
         dom.articlesList.innerHTML = `<div class="text-center p-5"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>`;
         dom.alertContainer.innerHTML = '';
 
-        const queryParams = { ...queryState };
-        // Sử dụng tên tham số đúng theo API: published_from và published_to
-        if (filterDom.startDateFilter.value) {
-            queryParams.published_from = filterDom.startDateFilter.value; 
-        } else {
-            delete queryParams.published_from;
-        }
-        if (filterDom.endDateFilter.value) {
-            queryParams.published_to = filterDom.endDateFilter.value;
-        } else {
-            delete queryParams.published_to;
-        }
-
-        const result = await apiService.fetchArticles(queryParams);
+        const result = await apiService.fetchArticles(queryState);
 
         if (result && result.data && result.data.items) {
-            let articlesToProcess = [...result.data.items];
+            const articlesToProcess = result.data.items; // API đã thực hiện lọc, không cần lọc lại ở frontend
 
-            // 1. Lọc theo Tiêu đề/Nội dung (Search Input)
-            const articleSearchText = filterDom.articleSearchInput.value.toLowerCase();
-            if (articleSearchText && queryParams.search === undefined) { // Chỉ lọc nếu API không có tham số search
-                articlesToProcess = articlesToProcess.filter(article =>
-                    (article.title && article.title.toLowerCase().includes(articleSearchText)) ||
-                    (article.content && article.content.toLowerCase().includes(articleSearchText))
-                );
-            }
-
-            // 2. Lọc theo Nguồn (Source Filter)
-            const selectedSourceId = tomSelectInstances.source.getValue();
-            if (selectedSourceId && queryParams.source_id === undefined) {
-                articlesToProcess = articlesToProcess.filter(article =>
-                    article.source_id && String(article.source_id) === String(selectedSourceId)
-                );
-            }
-
-            // 3. Lọc theo Từ khóa (Keywords)
-            const selectedKeywordIds = selectedKeywords.map(kw => String(kw.id));
-            if (selectedKeywordIds.length > 0 && queryParams.crawl_keyword_id === undefined) {
-                articlesToProcess = articlesToProcess.filter(article => {
-                    if (!article.keywords || article.keywords.length === 0) return false;
-                    return article.keywords.some(kw => selectedKeywordIds.includes(String(kw.keyword_id)));
-                });
-            }
-
-            // 4. Lọc theo Sắc thái (Sentiment)
-            const selectedSentiment = tomSelectInstances.sentiment.getValue();
-            if (selectedSentiment && queryParams.sentiment === undefined) {
-                articlesToProcess = articlesToProcess.filter(article =>
-                    article.sentiment && article.sentiment.toLowerCase() === selectedSentiment.toLowerCase()
-                );
-            }
-
-            // 5. Lọc theo Danh mục (Category)
-            if (queryState.category_id && queryParams.category_id === undefined) {
-                articlesToProcess = articlesToProcess.filter(article =>
-                    article.category_id && String(article.category_id) === String(queryState.category_id)
-                );
-            }
-
-            // 6. Lọc theo Ngày xuất bản (Date Range) - LOẠI BỎ LỌC TRÊN FRONTEND
-            // Việc lọc ngày tháng sẽ được thực hiện hoàn toàn bởi API Backend.
-
-
-            // 7. Sắp xếp dữ liệu (giữ lại nếu API không đảm bảo thứ tự sắp xếp)
-            const sortBy = queryState.sort_by || 'published_at';
-            const sortOrder = queryState.sort_order || 'desc';
-
-            articlesToProcess.sort((a, b) => {
-                let valA, valB;
-
-                if (sortBy === 'published_at') {
-                    // Đảm bảo so sánh bằng đối tượng Date
-                    valA = a.published_at ? new Date(a.published_at) : new Date(0);
-                    valB = b.published_at ? new Date(b.published_at) : new Date(0);
-                } else if (sortBy === 'title') {
-                    // So sánh chuỗi không phân biệt hoa thường
-                    valA = (a.title || '').toLowerCase();
-                    valB = (b.title || '').toLowerCase();
-                } else {
-                    return 0; // Không sắp xếp nếu tiêu chí không hợp lệ
-                }
-
-                if (sortOrder === 'asc') { // Sắp xếp TĂNG DẦN (cũ nhất -> mới nhất, A -> Z)
-                    if (valA < valB) return -1;
-                    if (valA > valB) return 1;
-                    return 0;
-                } else { // 'desc' - Sắp xếp GIẢM DẦN (mới nhất -> cũ nhất, Z -> A)
-                    if (valA > valB) return -1;
-                    if (valA < valB) return 1;
-                    return 0;
-                }
-            });
-            // --- KẾT THÚC CÁC LOGIC LỌC VÀ SẮP XẾP TRÊN FRONTEND ---
-
-
-            // Hiển thị các bài viết đã được lọc và sắp xếp (bởi API và có thể thêm bởi frontend)
             if (articlesToProcess.length > 0) {
                 dom.articlesList.innerHTML = articlesToProcess.map(createArticleCard).join('');
-                // Pagination controls giờ đây sẽ phản ánh tổng số từ API, mà API nên đã lọc.
                 dom.paginationControls.innerHTML = createPagination(result.data);
             } else {
                 dom.articlesList.innerHTML = `<div class="alert alert-warning text-center">Không tìm thấy bài viết nào phù hợp với các bộ lọc đã chọn.</div>`;
@@ -303,51 +225,47 @@ async function handleSaveToggle(saveContainer) {
         }
     }, 300);
 
-    function addEventListeners() {
+     function addEventListeners() {
         document.body.addEventListener('click', e => {
             const keywordTarget = e.target.closest('.clickable-keyword');
             if (keywordTarget) {
                 e.preventDefault();
-                e.stopPropagation(); // Ngăn các sự kiện click khác (nếu có)
+                e.stopPropagation();
                 const keywordId = keywordTarget.dataset.keywordId;
                 const keywordText = keywordTarget.dataset.keywordText;
                 
                 if (keywordId && keywordText) {
-                    // Gọi hàm addKeyword đã có sẵn để xử lý logic lọc
                     addKeyword(keywordId, keywordText);
                 }
-                return; // Dừng lại sau khi xử lý
+                return;
             }
 
-            const tagTarget = e.target.closest('.tag');
+            const tagTarget = e.target.closest('.tag.filter-tag');
+            if (tagTarget) {
+                e.preventDefault();
+                const { type, id } = tagTarget.dataset;
+                
+                if (type === 'category') {
+                    // Nếu click vào thẻ đang active thì bỏ chọn (set state về null)
+                    const newCategoryId = queryState.category_id === id ? null : id;
+                    
+                    updateQueryState({ category_id: newCategoryId }, () => {
+                        updateActiveCategoryTag(newCategoryId); // Cập nhật màu sắc
+                        fetchAndRenderArticles(); // Tải lại bài viết
+                    });
+                }
+            }
             const pageLinkTarget = e.target.closest('a.page-link');
             const suggestionTarget = e.target.closest('.suggestion-item');
             const removeKeywordBtn = e.target.closest('.selected-keyword-tag .btn-close');
             const saveContainerTarget = e.target.closest('.save-icon-container');
-            const cardTarget = e.target.closest('.article-card');
-            // 1. Ưu tiên xử lý nút LƯU
-            if (saveContainerTarget) {
-                e.preventDefault(); // Ngăn chặn mọi hành vi mặc định khác
-                handleSaveToggle(saveContainerTarget);
-                return; // Dừng xử lý tại đây
-            }
-
-            // 2. Nếu không phải nút Lưu, xử lý nhấp chuột vào THẺ
-            // if (cardTarget) {
-            //     e.preventDefault();
-            //     const url = cardTarget.dataset.url;
-            //     if (url) {
-            //         window.open(url, '_blank');
-            //     }
-            // }
-
 
             if (saveContainerTarget) {
-                e.preventDefault(); // Prevent link navigation
-                e.stopPropagation(); // Stop event from bubbling up to the card's link
+                e.preventDefault();
                 handleSaveToggle(saveContainerTarget);
-                return; // Stop further execution
+                return;
             }
+
             if (tagTarget) {
                 e.preventDefault();
                 const { type, id } = tagTarget.dataset;
@@ -379,15 +297,11 @@ async function handleSaveToggle(saveContainer) {
             }
         });
 
-        // Gán event cho các input lọc
         filterDom.articleSearchInput.addEventListener('input', debounce(e => updateQueryState({ search: e.target.value }, fetchAndRenderArticles), 300));
-        filterDom.sourceFilter.addEventListener('change', () => updateQueryState({ source_id: filterDom.sourceFilter.value }, fetchAndRenderArticles));
+        filterDom.sourceFilter.addEventListener('change', () => updateQueryState({ source_id: tomSelectInstances.source.getValue() }, fetchAndRenderArticles));
         filterDom.keywordSearchInput.addEventListener('input', e => debouncedKeywordSearch(e.target.value));
-        filterDom.sentimentFilter.addEventListener('change', () => updateQueryState({ sentiment: filterDom.sentimentFilter.value }, fetchAndRenderArticles));
-
-        filterDom.sortBy.addEventListener('change', () => {
-            updateQueryState({ sort_by: filterDom.sortBy.value }, fetchAndRenderArticles);
-        });
+        filterDom.sentimentFilter.addEventListener('change', () => updateQueryState({ sentiment: tomSelectInstances.sentiment.getValue() }, fetchAndRenderArticles));
+        filterDom.sortBy.addEventListener('change', () => updateQueryState({ sort_by: tomSelectInstances.sortBy.getValue() }, fetchAndRenderArticles));
 
         filterDom.sortOrderBtn.addEventListener('click', () => {
             const newOrder = queryState.sort_order === 'desc' ? 'asc' : 'desc';
@@ -395,81 +309,139 @@ async function handleSaveToggle(saveContainer) {
             updateQueryState({ sort_order: newOrder }, fetchAndRenderArticles);
         });
 
-        // Event listeners for date filters - these now directly trigger a fetch
-        // API sẽ chịu trách nhiệm lọc ngày tháng hoàn toàn.
-        filterDom.startDateFilter.addEventListener('change', fetchAndRenderArticles);
-        filterDom.endDateFilter.addEventListener('change', fetchAndRenderArticles);
+        const handleDateChange = () => {
+            updateQueryState({
+                published_from: filterDom.startDateFilter.value,
+                published_to: filterDom.endDateFilter.value
+            }, fetchAndRenderArticles);
+        };
 
-        // Cập nhật nút Reset để xóa tất cả các bộ lọc
+        filterDom.startDateFilter.addEventListener('change', handleDateChange);
+        filterDom.endDateFilter.addEventListener('change', handleDateChange);
+        
         filterDom.resetFiltersBtn.addEventListener('click', () => {
-            // 1. Reset state của API
             resetQueryState();
-
-            // 2. Reset state UI cho các từ khóa
             selectedKeywords = [];
             renderSelectedKeywordTags();
 
-            // 3. Reset giao diện của các ô input thường
             filterDom.articleSearchInput.value = '';
             filterDom.keywordSearchInput.value = '';
             filterDom.startDateFilter.value = '';
             filterDom.endDateFilter.value = '';
 
-            // 4. Dùng API của TomSelect để reset các dropdown
             tomSelectInstances.source.clear();
             tomSelectInstances.sentiment.clear();
             tomSelectInstances.sortBy.setValue('published_at');
-            // Đảm bảo nút sắp xếp trở về mặc định là giảm dần
             filterDom.sortOrderBtn.innerHTML = '<i class="bi bi-sort-down"></i>';
-
-            // 5. Tải lại dữ liệu với state đã được reset
+            
             fetchAndRenderArticles();
+        });
+    }
+
+    function updateActiveCategoryTag(activeId) {
+        const categoryTags = document.querySelectorAll('.filter-tag[data-type="category"]');
+        categoryTags.forEach(tag => {
+            if (tag.dataset.id === String(activeId)) {
+                tag.classList.add('active');
+            } else {
+                tag.classList.remove('active');
+            }
         });
     }
 
     // === INITIALIZATION ===
     async function initialize() {
         renderLayout();
+
+        const applyUrlFilters = () => {
+        const params = new URLSearchParams(window.location.search);
+        const publishedFrom = params.get('published_from');
+        const publishedTo = params.get('published_to');
+
+        const stateUpdates = {};
+
+        const categoryId = params.get('category_id');
+        if (categoryId) {
+            stateUpdates.category_id = categoryId;
+        }
+
+        // Nếu có tham số ngày bắt đầu, cập nhật state và UI
+        if (publishedFrom) {
+            stateUpdates.published_from = publishedFrom;
+            if (filterDom.startDateFilter) {
+                filterDom.startDateFilter.value = publishedFrom;
+            }
+        }
+
+        // Nếu có tham số ngày kết thúc, cập nhật state và UI
+        if (publishedTo) {
+            stateUpdates.published_to = publishedTo;
+            if (filterDom.endDateFilter) {
+                filterDom.endDateFilter.value = publishedTo;
+            }
+        }
+
+        const keywordId = params.get('keyword_id');
+        const keywordText = params.get('keyword_text');
+
+        if (keywordId && keywordText) {
+            // Cập nhật state để gọi API với đúng ID từ khóa
+            stateUpdates.crawl_keyword_id = [keywordId];
+            
+            // Sử dụng hàm addKeyword đã có sẵn để cập nhật UI (hiển thị tag từ khóa đã chọn)
+            // decodeURIComponent dùng để chuyển đổi các ký tự đặc biệt (ví dụ %20 thành dấu cách)
+            addKeyword(keywordId, decodeURIComponent(keywordText)); 
+        }
+
+        // Nếu có bất kỳ cập nhật nào, áp dụng chúng vào state chung
+        if (Object.keys(stateUpdates).length > 0) {
+            console.log("Áp dụng bộ lọc ngày từ URL:", stateUpdates);
+            // Không gọi callback ở đây để tránh fetch 2 lần khi khởi tạo
+            updateQueryState(stateUpdates); 
+        }
+    };
+
         await initializeTomSelects();
+        
+        // Gọi hàm để áp dụng bộ lọc từ URL trước khi làm mọi việc khác
+        applyUrlFilters();
+
         addEventListeners();
     
         if (getCurrentUser()) {
             try {
-                // Fetch user's preferred keywords and all system keywords simultaneously for efficiency
                 const [userKeywordsResult, allKeywordsResult] = await Promise.all([
                     apiService.fetchUserKeywords(),
-                    apiService.fetchKeywords({ limit: 1000 }) // Fetch all keywords to map text to ID
+                    apiService.fetchKeywords({ limit: 1000 })
                 ]);
     
                 if (userKeywordsResult.success && allKeywordsResult.success) {
                     const userKeywordTexts = new Set(userKeywordsResult.data.map(kw => kw.keyword_text));
                     const allKeywords = allKeywordsResult.data;
     
-                    // Find the full keyword objects (with IDs) that match the user's preferences
                     const preferredKeywords = allKeywords.filter(kw => userKeywordTexts.has(kw.keyword_text));
     
                     if (preferredKeywords.length > 0) {
-                        // Update the local state for displaying tags in the UI
                         selectedKeywords = preferredKeywords.map(kw => ({ id: kw.keyword_id, text: kw.keyword_text }));
-                        
-                        // Update the main query state with the keyword IDs for the API call
-                        const preferredKeywordIds = preferredKeywords.map(kw => kw.keyword_id);
-                        queryState.crawl_keyword_id = preferredKeywordIds;
-    
-                        // Render the selected keyword tags in the filter sidebar
+                        queryState.crawl_keyword_id = preferredKeywords.map(kw => kw.keyword_id);
                         renderSelectedKeywordTags();
                     }
                 }
             } catch (error) {
                 console.error("Could not fetch and apply user's preferred keywords:", error);
-                // Fail silently without showing an error to the user
             }
         }
     
-        // Fetch and render all page content. `fetchAndRenderArticles` will now use the updated queryState.
+        // Tải dữ liệu lần đầu, sẽ tự động áp dụng các bộ lọc từ URL hoặc từ sở thích người dùng
         fetchAndRenderArticles();
         fetchAndRenderCategories();
         fetchAndRenderSources();
+
+        fetchAndRenderCategories().then(() => {
+            updateActiveCategoryTag(queryState.category_id);
+        });
+        
+        
     }
 
     initialize();
