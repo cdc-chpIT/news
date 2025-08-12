@@ -160,7 +160,7 @@ function displaySavedArticles() {
     filtered.sort((a, b) => {
         const dateA = new Date(sortBy.includes('published') ? a.published_at : a.saved_at);
         const dateB = new Date(sortBy.includes('published') ? b.published_at : b.saved_at);
-        return sortBy.endsWith('_asc') ? dateA - dateB : dateB - dateA;
+        return sortBy.endsWith('_asc') ? dateA - dateB : dateB - a;
     });
     
     listEl.innerHTML = filtered.length > 0
@@ -188,7 +188,7 @@ function displaySavedProcurements() {
     filtered.sort((a, b) => {
         const dateA = new Date(sortBy.includes('published') ? a.published_at : a.created_at);
         const dateB = new Date(sortBy.includes('published') ? b.published_at : b.created_at);
-        return sortBy.endsWith('_asc') ? dateA - dateB : dateB - dateA;
+        return sortBy.endsWith('_asc') ? dateA - dateB : dateB - a;
     });
 
     listEl.innerHTML = filtered.length > 0
@@ -507,7 +507,7 @@ async function handleSaveAllSettings() {
         alertContainer.innerHTML = `<div class="alert alert-success alert-dismissible fade show">Đã lưu tất cả cài đặt thành công!<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>`;
         
         // Refresh keywords to ensure IDs are up to date after saving
-        await populateEmailSettingsForm();
+        await populateEmailSettingsForm(false);
 
     } catch (error) {
         alertContainer.innerHTML = `<div class="alert alert-danger alert-dismissible fade show">Lỗi: ${error.message}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>`;
@@ -595,6 +595,7 @@ function setupModalEventListeners(modalElement) {
     document.getElementById('addKeywordForm')?.addEventListener('submit', async (e) => {
         e.preventDefault();
         const alertContainer = document.getElementById('add-keyword-alert-container');
+        const emailSettingsAlertContainer = document.getElementById('email-settings-alert-container');
         alertContainer.innerHTML = '';
         const data = {
             keyword_text: document.getElementById('newKeywordText').value.trim(),
@@ -610,7 +611,11 @@ function setupModalEventListeners(modalElement) {
             const result = await apiService.createKeyword(data);
             if (result.success) {
                 addKeywordModalInstance.hide();
-                await populateEmailSettingsForm();
+                // Show success message in the main modal's alert area
+                if (emailSettingsAlertContainer) {
+                    emailSettingsAlertContainer.innerHTML = `<div class="alert alert-success alert-dismissible fade show">Đã thêm từ khóa mới thành công!<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>`;
+                }
+                await populateEmailSettingsForm(false);
             } else {
                 alertContainer.innerHTML = `<div class="alert alert-danger">${result.message || 'Lỗi không xác định.'}</div>`;
             }
@@ -664,14 +669,16 @@ function setupModalEventListeners(modalElement) {
 /**
  * Fetches and populates the email settings form with the user's current schedule and keywords.
  */
-async function populateEmailSettingsForm() {
+async function populateEmailSettingsForm(clearAlert = true) {
     const form = document.getElementById('email-settings-form');
     const fieldset = document.getElementById('email-schedule-fieldset');
     const alertContainer = document.getElementById('email-settings-alert-container');
     const availableKeywordsArea = document.getElementById('available-keywords-area');
     const selectedKeywordsContainer = document.getElementById('selected-keywords-container');
     
-    alertContainer.innerHTML = '';
+    if (clearAlert) {
+        alertContainer.innerHTML = '';
+    }
     fieldset.disabled = true;
     form.reset(); 
     availableKeywordsArea.innerHTML = `<div class="text-center"><div class="spinner-border spinner-border-sm"></div></div>`;
