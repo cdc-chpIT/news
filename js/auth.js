@@ -261,12 +261,12 @@ function injectSavedItemsModal() {
                                         <div class="vstack gap-2" id="email-content-options">
                                             <div class="form-check form-switch">
                                                 <input class="form-check-input" type="checkbox" role="switch" id="emailContentNews" checked>
-                                                <label class="form-check-label" for="emailContentNews">Tin tức cá nhân hóa</label>
+                                                <label class="form-check-label" for="emailContentNews">Tin tức</label>
                                                 <small class="text-danger ms-2 fst-italic">(Hãy chọn từ khoá phía dưới để nhận email tin tức)</small>
                                             </div>
                                             <div class="form-check form-switch">
                                                 <input class="form-check-input" type="checkbox" role="switch" id="emailContentProcurement" checked>
-                                                <label class="form-check-label" for="emailContentProcurement">Tổng hợp Mua sắm công</label>
+                                                <label class="form-check-label" for="emailContentProcurement">Mua sắm công</label>
                                             </div>
                                         </div>
                                     </div>
