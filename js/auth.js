@@ -186,10 +186,10 @@ function displaySavedProcurements() {
     }
 
     filtered.sort((a, b) => {
-        const dateA = new Date(sortBy.includes('published') ? a.published_at : a.created_at);
-        const dateB = new Date(sortBy.includes('published') ? b.published_at : b.created_at);
-        return sortBy.endsWith('_asc') ? dateA - dateB : dateB - a;
-    });
+    const dateA = new Date(sortBy.includes('published') ? a.published_at : a.created_at);
+    const dateB = new Date(sortBy.includes('published') ? b.published_at : b.created_at);
+    return sortBy.endsWith('_asc') ? dateA - dateB : dateB - dateA; 
+});
 
     listEl.innerHTML = filtered.length > 0
         ? filtered.map(renderSavedProcurement).join('')
