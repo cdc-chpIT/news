@@ -158,9 +158,9 @@ function displaySavedArticles() {
     }
 
     filtered.sort((a, b) => {
-        const dateA = new Date(sortBy.includes('published') ? a.published_at : a.saved_at);
-        const dateB = new Date(sortBy.includes('published') ? b.published_at : b.saved_at);
-        return sortBy.endsWith('_asc') ? dateA - dateB : dateB - a;
+    const dateA = new Date(sortBy.includes('published') ? a.published_at : a.saved_at);
+    const dateB = new Date(sortBy.includes('published') ? b.published_at : b.saved_at);
+    return sortBy.endsWith('_asc') ? dateA - dateB : dateB - dateA; // Đã sửa a thành dateA
     });
     
     listEl.innerHTML = filtered.length > 0
