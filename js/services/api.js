@@ -23,6 +23,17 @@ const apiService = {
         try {
             const response = await fetch(`${API_BASE_URL}${endpoint}`, fetchOptions);
 
+            if (response.status === 401 || response.status === 403) {
+                // Chỉ thực hiện đăng xuất nếu người dùng đang có thông tin đăng nhập trong cookie
+                if (getCookie('user')) {
+                    console.log("Token đã hết hạn hoặc không hợp lệ. Tự động đăng xuất.");
+                    // Gọi hàm logout() đã được định nghĩa trong auth.js
+                    logout();
+                    // Ném một lỗi đặc biệt để dừng việc thực thi các lệnh phía sau
+                    throw new Error('Unauthorized');
+                }
+            }
+
             if (response.status === 204) { // Xử lý cho trường hợp xóa thành công (No Content)
                 return { success: true, message: 'Xóa thành công.' };
             }
@@ -40,11 +51,14 @@ const apiService = {
             }
             return result;
 
-        } catch (error) {
+         } catch (error) {
+        // Nếu lỗi là 'Unauthorized' thì không cần log ra console vì đó là hành vi mong muốn
+        if (error.message !== 'Unauthorized') {
             console.error(`Lỗi khi thực hiện yêu cầu đến ${endpoint}:`, error);
-            // Ném lỗi ra ngoài để hàm gọi có thể bắt và xử lý
-            throw error;
         }
+        // Ném lỗi ra ngoài để hàm gọi có thể bắt và xử lý
+        throw error;
+    }
     },
 
     /**
