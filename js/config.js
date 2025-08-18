@@ -1,3 +1,3 @@
 const config = {
-    API_BASE_URL: 'https://e51fa7543c8f.ngrok-free.app/api/v1'
+    API_BASE_URL: 'https://8f6db9c5dc91.ngrok-free.app/api/v1'
 };
