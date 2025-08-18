@@ -56,14 +56,26 @@ document.addEventListener('DOMContentLoaded', () => {
         'INACTIVE': 'Không hoạt động'
     };
 
-    function formatDate(dateString) {
-        if (!dateString) return 'N/A';
-        const date = new Date(dateString);
-        return date.toLocaleString('vi-VN', {
-            day: '2-digit', month: '2-digit', year: 'numeric',
-            hour: '2-digit', minute: '2-digit'
-        });
+function formatDate(isoString) {
+    if (!isoString) {
+        return 'N/A';
     }
+    try {
+        const date = new Date(isoString);
+        
+        // Lấy các thành phần ngày/tháng/năm/giờ/phút theo UTC
+        const day = String(date.getUTCDate()).padStart(2, '0');
+        const month = String(date.getUTCMonth() + 1).padStart(2, '0'); // Tháng bắt đầu từ 0
+        const year = date.getUTCFullYear();
+        const hours = String(date.getUTCHours()).padStart(2, '0');
+        const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+
+        return `${hours}:${minutes} ${day}/${month}/${year}`;
+    } catch (error) {
+        console.error('Error formatting date:', error);
+        return 'Invalid Date';
+    }
+}
 
     // === RENDER FUNCTIONS ===
     function renderLayout() {
