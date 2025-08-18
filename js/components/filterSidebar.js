@@ -18,8 +18,17 @@ function createFilterSidebar() {
                     </select>
             </div>
 
-              <div class="mb-3 position-relative">
-                <label for="keyword-search-input" class="form-label fw-semibold">Lọc theo từ khóa</label>
+            <div class="mb-3 position-relative">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <label for="keyword-search-input" class="form-label fw-semibold mb-0">Lọc theo từ khóa</label>
+                    <div id="keyword-logic-toggle" class="btn-group btn-group-sm" role="group" aria-label="Keyword search logic">
+                        <input type="radio" class="btn-check" name="keyword_logic" id="logic-or" value="or" autocomplete="off" checked>
+                        <label class="btn btn-outline-primary" for="logic-or" title="Hiển thị bài viết chứa BẤT KỲ từ khóa nào đã chọn">OR</label>
+
+                        <input type="radio" class="btn-check" name="keyword_logic" id="logic-and" value="and" autocomplete="off">
+                        <label class="btn btn-outline-primary" for="logic-and" title="Hiển thị bài viết chứa TẤT CẢ các từ khóa đã chọn">AND</label>
+                    </div>
+                </div>
                 
                 <div id="selected-keyword-container" class="mb-2"></div>
                 

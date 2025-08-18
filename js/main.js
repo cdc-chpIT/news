@@ -299,6 +299,15 @@ async function handleSaveToggle(saveContainer) {
 
         filterDom.articleSearchInput.addEventListener('input', debounce(e => updateQueryState({ search: e.target.value }, fetchAndRenderArticles), 300));
         filterDom.sourceFilter.addEventListener('change', () => updateQueryState({ source_id: tomSelectInstances.source.getValue() }, fetchAndRenderArticles));
+        const keywordLogicToggle = document.getElementById('keyword-logic-toggle');
+        if (keywordLogicToggle) {
+            keywordLogicToggle.addEventListener('change', (e) => {
+                if (e.target.name === 'keyword_logic') {
+                    const newLogic = e.target.value;
+                    updateQueryState({ keyword_logic: newLogic }, fetchAndRenderArticles);
+                }
+            });
+        }
         filterDom.keywordSearchInput.addEventListener('input', e => debouncedKeywordSearch(e.target.value));
         filterDom.sentimentFilter.addEventListener('change', () => updateQueryState({ sentiment: tomSelectInstances.sentiment.getValue() }, fetchAndRenderArticles));
         filterDom.sortBy.addEventListener('change', () => updateQueryState({ sort_by: tomSelectInstances.sortBy.getValue() }, fetchAndRenderArticles));

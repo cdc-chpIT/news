@@ -7,6 +7,7 @@ let queryState = {
     category_id: null,
     source_id: null, 
     crawl_keyword_id: [],
+    keyword_logic: 'or',
     sort_by: 'published_at',
     sort_order: 'desc',
     page: 1,
@@ -33,7 +34,7 @@ function updatePageState(updates, callback) {
 function resetQueryState(callback) {
     queryState = {
         search: '', sentiment: '', category_id: null, source_id: null, crawl_keyword_id: [], 
-        sort_by: 'published_at', sort_order: 'desc', page: 1, size: 9,
+        keyword_logic: 'or', sort_by: 'published_at', sort_order: 'desc', page: 1, size: 9,
         published_from: '', 
         published_to: ''    
     };
