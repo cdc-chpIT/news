@@ -538,3 +538,62 @@ body {
     background-color: #e9ecef !important; /* Slightly darker background on hover */
     border-color: #dee2e6 !important;
 }
+
+/* === CUSTOM TRANSLATE DROPDOWN (v5 - FIXED) === */
+
+/*
+ * FIX: Thay vì dùng "display: none", chúng ta sẽ ẩn tiện ích của Google
+ * bằng cách làm cho nó vô hình và không thể click vào.
+ * Điều này đảm bảo script của Google vẫn có thể hoạt động bình thường.
+*/
+#google_translate_element {
+    position: absolute;
+    top: -9999px;
+    left: -9999px;
+    height: 0;
+    width: 0;
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none; /* Ngăn không cho người dùng tương tác */
+    z-index: -1; /* Đưa nó ra sau cùng */
+}
+
+
+/* Tùy chỉnh nút bấm chính của menu (giữ nguyên) */
+#translate-dropdown-btn {
+    background-color: transparent !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    color: #ffffff !important;
+    font-weight: 500;
+    padding: 8px 12px;
+}
+
+#translate-dropdown-btn:hover, #translate-dropdown-btn:focus {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    border-color: rgba(255, 255, 255, 0.3) !important;
+}
+
+/* Loại bỏ mũi tên mặc định của Bootstrap (giữ nguyên) */
+#translate-dropdown-btn::after {
+    display: none;
+}
+
+/* Tùy chỉnh khung menu xổ xuống (giữ nguyên) */
+#translate-dropdown-btn + .dropdown-menu {
+    background-color: #343a40; /* Nền tối */
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 0.375rem;
+    margin-top: 0.5rem !important;
+}
+
+/* Tùy chỉnh các mục chọn bên trong menu (giữ nguyên) */
+#translate-dropdown-btn + .dropdown-menu .dropdown-item {
+    color: #f8f9fa; /* Chữ màu sáng */
+    font-weight: 500;
+    transition: background-color 0.2s ease;
+}
+
+#translate-dropdown-btn + .dropdown-menu .dropdown-item:hover {
+    background-color: #495057; /* Nền xám đậm hơn khi di chuột */
+    color: #ffffff;
+}

@@ -28,9 +28,11 @@ document.addEventListener('DOMContentLoaded', () => {
     function manageCrawlButtonState() {
         if (!dom.crawlBtn) return;
 
-        const originalHtml = `<i class="bi bi-arrow-clockwise me-2"></i>Cập nhật dữ liệu`;
-        const loadingHtml = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Đang xử lý...`;
-        
+        // Lấy các thẻ span tương ứng với từng trạng thái
+        const defaultStateSpan = dom.crawlBtn.querySelector('.default-state');
+        const loadingStateSpan = dom.crawlBtn.querySelector('.loading-state');
+        if (!defaultStateSpan || !loadingStateSpan) return; // Thoát nếu không tìm thấy
+
         let crawlStatus = null;
         let isScheduledCrawlRunning = false;
         
@@ -39,7 +41,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (crawlStatusStr) {
                 crawlStatus = JSON.parse(crawlStatusStr);
             }
-
             const scheduledCrawlStatusStr = sessionStorage.getItem(CRAWL_SCHEDULED_KEY);
             if (scheduledCrawlStatusStr) {
                 isScheduledCrawlRunning = JSON.parse(scheduledCrawlStatusStr).active;
@@ -49,18 +50,23 @@ document.addEventListener('DOMContentLoaded', () => {
             sessionStorage.removeItem(CRAWL_STATE_KEY);
             sessionStorage.removeItem(CRAWL_SCHEDULED_KEY);
             dom.crawlBtn.disabled = false;
-            dom.crawlBtn.innerHTML = originalHtml;
+            defaultStateSpan.classList.remove('d-none');
+            loadingStateSpan.classList.add('d-none');
             return;
         }
 
         const isManualCrawlActive = crawlStatus && crawlStatus.active && (Date.now() - crawlStatus.startTime < CRAWL_TIMEOUT_MS);
         
         if (isManualCrawlActive || isScheduledCrawlRunning) {
+            // Trạng thái ĐANG TẢI
             dom.crawlBtn.disabled = true;
-            dom.crawlBtn.innerHTML = loadingHtml;
+            defaultStateSpan.classList.add('d-none');
+            loadingStateSpan.classList.remove('d-none');
         } else {
+            // Trạng thái MẶC ĐỊNH
             dom.crawlBtn.disabled = false;
-            dom.crawlBtn.innerHTML = originalHtml;
+            defaultStateSpan.classList.remove('d-none');
+            loadingStateSpan.classList.add('d-none');
         }
         
         // Dọn dẹp trạng thái đã hết hạn
