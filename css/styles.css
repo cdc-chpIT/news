@@ -597,3 +597,11 @@ body {
     background-color: #495057; 
     color: #ffffff;
 }
+
+/* CSS để căn giữa tiêu đề header một cách tuyệt đối */
+.header-title-center {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}

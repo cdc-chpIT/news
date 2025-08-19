@@ -7,9 +7,11 @@ function createHeader(title) {
             <a href="index.html" class="logo-link d-flex align-items-center text-decoration-none text-white">
                 <img src="images/CHP_Logo.png" alt="CHP Logo" style="height: 80px; width:140px; margin-right: 15px;">
             </a>
-            <div class="flex-grow-1 text-center">
+
+            <div class="header-title-center">
                 <h1 class="h4 mb-0 fw-bold text-uppercase text-white">${title}</h1>
             </div>
+
             <div class="d-flex align-items-center">
                 <div class="dropdown me-3">
                     <button class="btn dropdown-toggle" type="button" id="translate-dropdown-btn" data-bs-toggle="dropdown" aria-expanded="false">
