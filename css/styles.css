@@ -559,7 +559,7 @@ body {
 }
 
 
-/* Tùy chỉnh nút bấm chính của menu (giữ nguyên) */
+/* Tùy chỉnh nút bấm chính của menu  */
 #translate-dropdown-btn {
     background-color: transparent !important;
     border: 1px solid rgba(255, 255, 255, 0.2) !important;
@@ -573,12 +573,12 @@ body {
     border-color: rgba(255, 255, 255, 0.3) !important;
 }
 
-/* Loại bỏ mũi tên mặc định của Bootstrap (giữ nguyên) */
+/* Loại bỏ mũi tên mặc định của Bootstrap  */
 #translate-dropdown-btn::after {
     display: none;
 }
 
-/* Tùy chỉnh khung menu xổ xuống (giữ nguyên) */
+/* Tùy chỉnh khung menu xổ xuống  */
 #translate-dropdown-btn + .dropdown-menu {
     background-color: #343a40; /* Nền tối */
     border: 1px solid rgba(255, 255, 255, 0.15);
@@ -586,7 +586,7 @@ body {
     margin-top: 0.5rem !important;
 }
 
-/* Tùy chỉnh các mục chọn bên trong menu (giữ nguyên) */
+/* Tùy chỉnh các mục chọn bên trong menu */
 #translate-dropdown-btn + .dropdown-menu .dropdown-item {
     color: #f8f9fa; /* Chữ màu sáng */
     font-weight: 500;
@@ -594,6 +594,6 @@ body {
 }
 
 #translate-dropdown-btn + .dropdown-menu .dropdown-item:hover {
-    background-color: #495057; /* Nền xám đậm hơn khi di chuột */
+    background-color: #495057; 
     color: #ffffff;
 }
