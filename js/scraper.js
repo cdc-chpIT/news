@@ -56,77 +56,82 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 function renderTableAndFetchLinks(scrapedData) {
-        const table = scrapedData.data[0];
-        const itemType = state.procurementType === 'plan' ? 'khlcnt' : 'tbmt';
-        const codeHeader = itemType === 'khlcnt' ? 'Mã KHLCNT' : 'Mã TBMT';
+    const table = scrapedData.data[0];
+    const itemType = state.procurementType === 'plan' ? 'khlcnt' : 'tbmt';
+    const codeHeader = itemType === 'khlcnt' ? 'Mã KHLCNT' : 'Mã TBMT';
 
-        const headers = ['Lưu', codeHeader, 'Tên dự án', 'Mã đơn vị', 'Bên mời thầu', 'Ngày đăng tải', 'Đóng thầu'];
-        const headersHtml = headers.map(h => `<th>${h}</th>`).join('');
+    // 1. Tự động thay đổi tiêu đề cột cuối cùng dựa trên loại mời thầu
+    const lastHeader = state.procurementType === 'plan' ? 'Số lượng gói thầu' : 'Đóng thầu';
 
-        const rowsData = table.rows.map(row => {
-            const firstCell = row[0] || '';
-            const code = firstCell.slice(0, 15).trim();
-            const description = firstCell.substring(code.length).trim();
-            
-            const rawProcuringEntity = row[1] || '';
-            let entityId = '';
-            let entityName = rawProcuringEntity;
+    // 2. Áp dụng tiêu đề mới vào mảng headers
+    const headers = ['Lưu', codeHeader, 'Tên dự án', 'Mã đơn vị', 'Bên mời thầu', 'Ngày đăng tải', lastHeader];
+    const headersHtml = headers.map(h => `<th>${h}</th>`).join('');
 
-            const match = rawProcuringEntity.match(/^([a-zA-Z0-9]*\d)(.*)/);
-            if (match) {
-                entityId = match[1];
-                entityName = match[2].trim();
-            }
+    const rowsData = table.rows.map(row => {
+        const firstCell = row[0] || '';
+        const code = firstCell.slice(0, 15).trim();
+        const description = firstCell.substring(code.length).trim();
+        
+        const rawProcuringEntity = row[1] || '';
+        let entityId = '';
+        let entityName = rawProcuringEntity;
 
-            const publishedDateStr = row[2] || '';
-            const closingDateStr = row[3] || 'N/A';
-            return { code, description, entityId, entityName, publishedDateStr, closingDateStr, itemType };
-        });
+        const match = rawProcuringEntity.match(/^([a-zA-Z0-9]*\d)(.*)/);
+        if (match) {
+            entityId = match[1];
+            entityName = match[2].trim();
+        }
 
-        const rowsHtml = rowsData.map(r => {
-            const isSaved = savedProcurements.has(r.code);
-            const saveIconClass = isSaved ? 'bi-bookmark-check-fill text-success' : 'bi-bookmark';
-            const saveTitle = isSaved ? 'Bỏ lưu' : 'Lưu tin';
-            const userProcurementId = isSaved ? savedProcurements.get(r.code) : '';
-            
-            const saveButtonHtml = `
-                <button class="btn btn-light save-procurement-btn" 
-                        title="${saveTitle}"
-                        data-item-code="${r.code}"
-                        data-project-name="${r.description.replace(/"/g, '&quot;')}"
-                        data-procuring-entity="${r.entityName.replace(/"/g, '&quot;')}"
-                        data-published-at="${r.publishedDateStr}"
-                        data-is-saved="${isSaved}"
-                        data-procurement-id="${userProcurementId}">
-                    <i class="bi ${saveIconClass}"></i>
-                </button>`;
+        const publishedDateStr = row[2] || '';
+        // 3. Lấy dữ liệu cho cột cuối cùng (dữ liệu này không thay đổi, chỉ có tiêu đề thay đổi)
+        const lastColumnData = row[3] || 'N/A';
+        return { code, description, entityId, entityName, publishedDateStr, lastColumnData, itemType };
+    });
 
-            return `
-                <tr>
-                    <td class="text-center">${saveButtonHtml}</td>
-                    <td>${r.code}</td>
-                    <td class="project-name-link" 
-                        data-item-code="${r.code.slice(0, 12)}" 
-                        data-kind="${r.itemType}" 
-                        title="Nhấn để mở link gốc">
-                        ${r.description}
-                    </td>
-                    <td>${r.entityId}</td>
-                    <td>${r.entityName}</td>
-                    <td>${r.publishedDateStr}</td>
-                    <td>${r.closingDateStr}</td>
-                </tr>
-            `;
-        }).join('');
+    const rowsHtml = rowsData.map(r => {
+        const isSaved = savedProcurements.has(r.code);
+        const saveIconClass = isSaved ? 'bi-bookmark-check-fill text-success' : 'bi-bookmark';
+        const saveTitle = isSaved ? 'Bỏ lưu' : 'Lưu tin';
+        const userProcurementId = isSaved ? savedProcurements.get(r.code) : '';
+        
+        const saveButtonHtml = `
+            <button class="btn btn-light save-procurement-btn" 
+                    title="${saveTitle}"
+                    data-item-code="${r.code}"
+                    data-project-name="${r.description.replace(/"/g, '&quot;')}"
+                    data-procuring-entity="${r.entityName.replace(/"/g, '&quot;')}"
+                    data-published-at="${r.publishedDateStr}"
+                    data-is-saved="${isSaved}"
+                    data-procurement-id="${userProcurementId}">
+                <i class="bi ${saveIconClass}"></i>
+            </button>`;
 
-        dom.resultsContainer.innerHTML = `
-            <div class="table-responsive">
-                <table class="table table-hover table-bordered procurement-table">
-                    <thead class="table-light"><tr>${headersHtml}</tr></thead>
-                    <tbody>${rowsHtml}</tbody>
-                </table>
-            </div>`;
-    }
+        return `
+            <tr>
+                <td class="text-center">${saveButtonHtml}</td>
+                <td>${r.code}</td>
+                <td class="project-name-link" 
+                    data-item-code="${r.code.slice(0, 12)}" 
+                    data-kind="${r.itemType}" 
+                    title="Nhấn để mở link gốc">
+                    ${r.description}
+                </td>
+                <td>${r.entityId}</td>
+                <td>${r.entityName}</td>
+                <td>${r.publishedDateStr}</td>
+                <td>${r.lastColumnData}</td>
+            </tr>
+        `;
+    }).join('');
+    
+    dom.resultsContainer.innerHTML = `
+        <div class="table-responsive">
+            <table class="table table-hover table-bordered procurement-table">
+                <thead class="table-light"><tr>${headersHtml}</tr></thead>
+                <tbody>${rowsHtml}</tbody>
+            </table>
+        </div>`;
+}
 
     function renderPagination() {
         let pageItems = '';
