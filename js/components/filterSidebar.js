@@ -19,25 +19,26 @@ function createFilterSidebar() {
             </div>
 
             <div class="mb-3 position-relative">
-                <div class="d-flex justify-content-between align-items-center mb-1">
-                    <label for="keyword-search-input" class="form-label fw-semibold mb-0">Lọc theo từ khóa</label>
-                    <div id="keyword-logic-toggle" class="btn-group btn-group-sm" role="group" aria-label="Keyword search logic">
-                        <input type="radio" class="btn-check" name="keyword_logic" id="logic-or" value="or" autocomplete="off" checked>
-                        <label class="btn btn-outline-primary" for="logic-or" title="Hiển thị bài viết chứa BẤT KỲ từ khóa nào đã chọn">OR</label>
-
-                        <input type="radio" class="btn-check" name="keyword_logic" id="logic-and" value="and" autocomplete="off">
-                        <label class="btn btn-outline-primary" for="logic-and" title="Hiển thị bài viết chứa TẤT CẢ các từ khóa đã chọn">AND</label>
-                    </div>
-                </div>
-                
-                <div id="selected-keyword-container" class="mb-2"></div>
-                
-                <div id="keyword-input-wrapper">
+                <label for="primary-keyword-search-input" class="form-label fw-semibold">Từ khóa chính (AND)</label>
+                <div id="selected-primary-keyword-container" class="mb-2"></div>
+                <div id="primary-keyword-input-wrapper">
                     <div class="input-group">
                         <span class="input-group-text"><i class="bi bi-tags-fill"></i></span>
-                        <input type="text" id="keyword-search-input" class="form-control" placeholder="Gõ để tìm từ khóa...">
+                        <input type="text" id="primary-keyword-search-input" class="form-control" placeholder="Gõ để tìm từ khóa...">
                     </div>
-                    <div id="keyword-suggestions" class="autocomplete-suggestions list-group"></div>
+                    <div id="primary-keyword-suggestions" class="autocomplete-suggestions list-group"></div>
+                </div>
+            </div>
+
+            <div class="mb-3 position-relative">
+                <label for="secondary-keyword-search-input" class="form-label fw-semibold">Từ khóa phụ (OR)</label>
+                <div id="selected-secondary-keyword-container" class="mb-2"></div>
+                <div id="secondary-keyword-input-wrapper">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-tags-fill"></i></span>
+                        <input type="text" id="secondary-keyword-search-input" class="form-control" placeholder="Gõ để tìm từ khóa...">
+                    </div>
+                    <div id="secondary-keyword-suggestions" class="autocomplete-suggestions list-group"></div>
                 </div>
             </div>
 
