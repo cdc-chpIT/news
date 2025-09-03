@@ -605,3 +605,121 @@ body {
     top: 50%;
     transform: translate(-50%, -50%);
 }
+
+/* --- Bắt đầu phần ADB Table Styles --- */
+.adb-table-container .table {
+    margin-bottom: 0; /* Remove default table bottom margin */
+    min-width: 800px; /* Ensure table doesn't get too narrow on smaller screens */
+}
+
+.adb-table-container .table th,
+.adb-table-container .table td {
+    vertical-align: middle;
+    padding: 0.75rem; /* Standard padding */
+    border-top: 1px solid #dee2e6; /* Bootstrap default */
+}
+
+.adb-table-container .table thead th {
+    background-color: #f8f9fa; /* Light background for header */
+    color: #495057; /* Darker text for header */
+    font-weight: 600;
+    text-align: left;
+    white-space: nowrap; /* Prevent header text from wrapping */
+}
+
+/* Specific column widths and alignment */
+.adb-table-container .table th:nth-child(1), /* Tên dự án */
+.adb-table-container .table td:nth-child(1) {
+    width: 40%;
+    text-align: left;
+}
+
+.adb-table-container .table th:nth-child(2), /* Mã dự án */
+.adb-table-container .table td:nth-child(2) {
+    width: 12%;
+    text-align: center;
+    font-size: 0.9em; /* Smaller font for project code */
+}
+
+.adb-table-container .table th:nth-child(3), /* Năm phê duyệt */
+.adb-table-container .table td:nth-child(3) {
+    width: 10%;
+    text-align: center;
+}
+
+.adb-table-container .table th:nth-child(4), /* Trạng thái */
+.adb-table-container .table td:nth-child(4) {
+    width: 10%;
+    text-align: center;
+}
+
+.adb-table-container .table th:nth-child(5), /* Quốc gia */
+.adb-table-container .table td:nth-child(5) {
+    width: 15%;
+    text-align: left;
+}
+
+.adb-table-container .table th:nth-child(6), /* Lĩnh vực */
+.adb-table-container .table td:nth-child(6) {
+    width: 13%;
+    text-align: left;
+}
+
+.adb-table-container .table tbody tr:hover {
+    background-color: #f2f2f2; /* Light hover effect */
+    cursor: pointer; /* Indicate clickable rows */
+}
+
+/* Style for the badge (status) */
+.adb-table-container .table .badge {
+    padding: 0.4em 0.7em;
+    font-size: 0.85em;
+    font-weight: 600;
+    border-radius: 0.25rem;
+}
+
+.adb-table-container .table td a {
+    text-decoration: none; /* Remove underline from links */
+    color: #007bff; /* Bootstrap primary blue */
+    font-weight: 500;
+}
+
+.adb-table-container .table td a:hover {
+    text-decoration: underline; /* Add underline on hover */
+    color: #0056b3; /* Darker blue on hover */
+}
+
+/* Responsive considerations (optional, for smaller screens) */
+@media (max-width: 768px) {
+    .adb-table-container .table {
+        font-size: 0.9em;
+    }
+    .adb-table-container .table th,
+    .adb-table-container .table td {
+        padding: 0.5rem;
+    }
+    .adb-table-container .table th:nth-child(1),
+    .adb-table-container .table td:nth-child(1) {
+        width: 35%; /* Adjust width for title on smaller screens */
+    }
+    .adb-table-container .table th:nth-child(2),
+    .adb-table-container .table td:nth-child(2) {
+        width: 15%;
+    }
+    .adb-table-container .table th:nth-child(3),
+    .adb-table-container .table td:nth-child(3) {
+        width: 12%;
+    }
+    .adb-table-container .table th:nth-child(4),
+    .adb-table-container .table td:nth-child(4) {
+        width: 12%;
+    }
+    .adb-table-container .table th:nth-child(5),
+    .adb-table-container .table td:nth-child(5) {
+        width: 15%;
+    }
+    .adb-table-container .table th:nth-child(6),
+    .adb-table-container .table td:nth-child(6) {
+        width: 11%;
+    }
+}

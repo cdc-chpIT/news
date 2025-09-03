@@ -113,6 +113,7 @@ function createNavbar(activePage = 'dashboard') {
         { id: 'dashboard', href: 'index.html', text: 'Dashboard' },
         { id: 'news', href: 'news.html', text: 'Tin Tức' },
         { id: 'scraper', href: 'scraper.html', text: 'Mua sắm công' },
+        { id: 'adb', href: 'adb.html', text: 'ADB' }, // <-- MỤC MỚI ĐƯỢC THÊM VÀO ĐÂY
         { id: 'keywords', href: 'keywords.html', text: 'Quản lý Từ khóa', adminOnly: true },
         { id: 'categories', href: 'categories.html', text: 'Quản lý Danh mục', adminOnly: true },
         { id: 'sources', href: 'sources.html', text: 'Quản lý Nguồn tin', adminOnly: true },

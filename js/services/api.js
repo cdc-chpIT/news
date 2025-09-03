@@ -288,5 +288,20 @@ const apiService = {
         return this._request(`/users/me/preferences/keywords/${customKeywordId}`, {
             method: 'DELETE'
         });
+    },
+
+    fetchAdbRssFeed() {
+        const token = getCookie('accessToken');
+        const headers = { 'ngrok-skip-browser-warning': 'true' };
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+        return fetch(`${API_BASE_URL}/adb/rss`, { headers })
+            .then(res => {
+                if (!res.ok) {
+                    throw new Error('Không thể lấy RSS feed từ backend.');
+                }
+                return res.text();
+            });
     }
 };
