@@ -290,18 +290,36 @@ const apiService = {
         });
     },
 
-    fetchAdbRssFeed() {
+    fetchAdbRssFeed(filterPath = 'all/all/all/all/all/all/all') {
         const token = getCookie('accessToken');
         const headers = { 'ngrok-skip-browser-warning': 'true' };
         if (token) {
             headers['Authorization'] = `Bearer ${token}`;
         }
-        return fetch(`${API_BASE_URL}/adb/rss`, { headers })
+        
+        // FIX: Không sử dụng encodeURIComponent cho toàn bộ đường dẫn.
+        // Trình duyệt sẽ tự động mã hóa giá trị của tham số `filters` một cách chính xác.
+        const url = `${API_BASE_URL}/adb/rss?filters=${filterPath}`;
+        
+        return fetch(url, { headers })
             .then(res => {
                 if (!res.ok) {
-                    throw new Error('Không thể lấy RSS feed từ backend.');
+                    // Cải thiện thông báo lỗi để dễ debug hơn
+                    return res.text().then(text => { 
+                        throw new Error(`Lỗi từ backend: Status ${res.status} - ${text}`); 
+                    });
                 }
                 return res.text();
+            })
+            .catch(error => {
+                console.error("Lỗi khi gọi fetchAdbRssFeed:", error);
+                // Ném lại lỗi để logic trong adb.js có thể bắt được
+                throw error;
             });
-    }
+    },
+    
+    fetchWorldBankProjects(params) {
+        // Hàm _fetch đã hỗ trợ tham số dạng mảng, rất tiện lợi
+        return this._fetch('/worldbank/projects', params);
+    },
 };

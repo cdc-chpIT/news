@@ -43,15 +43,21 @@ body {
     padding-left: 1rem;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     transition: transform 0.3s ease-in-out;
+    position: relative; 
 }
 
-/* Kích hoạt hiệu ứng khi cuộn */
+.sticky-header-wrapper.scrolled {
+    pointer-events: none;
+}
+
 .sticky-header-wrapper.scrolled .top-header {
     transform: translateY(-96px);
 }
 
 .sticky-header-wrapper.scrolled .main-navbar {
     transform: translateY(-96px);
+    pointer-events: auto;
+    z-index: 1051; 
 }
 
 
@@ -93,6 +99,12 @@ body {
     box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
     max-height: calc(100vh - 85px);
     overflow-y: auto;
+}
+
+
+#filter-sidebar-container.sticky-top {
+    top: 60px !important; 
+    z-index: 1020;
 }
 
 .tag-filter-container {
@@ -722,4 +734,74 @@ body {
     .adb-table-container .table td:nth-child(6) {
         width: 11%;
     }
+}
+
+.accordion-body .filter-search {
+    border-radius: 2px; /* Góc hơi vuông */
+    padding: .375rem .75rem;
+}
+
+.filter-list-wrapper {
+    margin-top: 1rem;
+}
+
+.filter-option-item {
+    padding-left: 0;
+    margin-bottom: 0.75rem;
+}
+
+.filter-option-item .form-check {
+    padding-left: 0;
+    display: flex;
+    align-items: center;
+}
+
+/* Tùy chỉnh checkbox */
+.filter-option-item .form-check-input {
+    margin-left: 0;
+    margin-top: 0; /* Canh giữa theo chiều dọc */
+    width: 1.25em;  /* Làm checkbox to hơn một chút */
+    height: 1.25em;
+    border: 1px solid #ced4da;
+}
+
+.filter-option-item .form-check-label {
+    padding-left: 0.75rem; /* Khoảng cách giữa checkbox và text */
+    flex-grow: 1;
+    display: flex;
+    justify-content: space-between;
+}
+
+.filter-option-item .form-check-label .text-muted {
+    white-space: nowrap;
+    margin-left: 0.5rem;
+}
+
+.btn-see-more {
+    text-decoration: none;
+    font-size: 0.9em;
+    color: #0066cc; /* Màu xanh dương đặc trưng */
+    display: inline-block;
+    margin-top: 0.5rem;
+}
+
+.btn-see-more:hover {
+    text-decoration: underline;
+}
+
+.filter-count-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75em; /* Kích thước chữ nhỏ hơn một chút */
+    font-weight: 700;  /* Chữ đậm */
+    color: #0d6efd;    /* Chữ màu xanh dương */
+    background-color: #e9ecef; /* Nền xám nhạt */
+    margin-left: 8px;
+    min-width: 22px;   /* Chiều rộng tối thiểu */
+    height: 22px;      /* Chiều cao */
+    padding: 0 6px;    /* Đệm bên trong */
+    border-radius: 50%; /* Bo tròn để tạo thành hình tròn */
+    line-height: 1;    /* Canh chữ theo chiều dọc */
+    text-align: center;
 }
