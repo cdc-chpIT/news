@@ -7,6 +7,7 @@
     <link rel="icon" type="image/png" href="images/CHP_Logo.png">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.css" rel="stylesheet">
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
@@ -17,11 +18,62 @@
     <div class="main-content-wrapper">
         <div class="main-content flex-grow-1">
             <main class="container-fluid mt-4">
-                <div class="row">
-                    <section class="col-12">
+                <div class="row gx-4">
+                    <aside class="col-lg-3">
+                        <div id="filter-sidebar-container" class="sticky-top" style="top: 20px;">
+                            <div class="card shadow-sm">
+                                <div class="card-header">
+                                    <h5 class="mb-0"><i class="bi bi-funnel-fill me-2"></i>Bộ lọc</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label for="wb-search-input" class="form-label fw-semibold">Tên dự án</label>
+                                        <input type="text" id="wb-search-input" class="form-control" placeholder="Tìm theo tên...">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="wb-country-filter" class="form-label fw-semibold">Quốc gia</label>
+                                        <select id="wb-country-filter" multiple placeholder="Chọn quốc gia..."></select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="wb-status-filter" class="form-label fw-semibold">Trạng thái</label>
+                                        <select id="wb-status-filter" multiple placeholder="Chọn trạng thái..."></select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="wb-stage-filter" class="form-label fw-semibold">Giai đoạn</label>
+                                        <select id="wb-stage-filter" multiple placeholder="Chọn giai đoạn..."></select>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label fw-semibold">Ngày phê duyệt</label>
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text">Từ</span>
+                                            <input type="date" id="wb-approval-date-from" class="form-control">
+                                            <span class="input-group-text">Đến</span>
+                                            <input type="date" id="wb-approval-date-to" class="form-control">
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label fw-semibold">Ngày cập nhật cuối</label>
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text">Từ</span>
+                                            <input type="date" id="wb-updated-date-from" class="form-control">
+                                            <span class="input-group-text">Đến</span>
+                                            <input type="date" id="wb-updated-date-to" class="form-control">
+                                        </div>
+                                    </div>
+
+                                    <div class="d-grid">
+                                        <button id="wb-clear-filters-btn" class="btn btn-outline-secondary">Xóa tất cả bộ lọc</button>
+                                    </div>
+                                </div>
+                            </div>
+                            </div>
+                        </aside>
+
+                    <section class="col-lg-9">
                         <div class="card shadow-sm">
                             <div class="card-body">
-                                <h4 class="card-title mb-4">World Bank Projects</h4>
                                 <div id="alert-container"></div>
                                 <div id="wb-results-container">
                                     </div>
@@ -34,12 +86,14 @@
             </main>
         </div>
     </div>
-
     <script src="./js/config.js"></script>
     <script src="./js/services/api.js"></script>
-    <script src="./js/state.js"></script> <script src="./js/components/layout.js"></script>
+    <script src="./js/state.js"></script>
+    <script src="./js/components/layout.js"></script>
     <script src="./js/components/pagination.js"></script>
-    <script src="./js/components/articleCard.js"></script> <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="./js/components/articleCard.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
     <script src="./js/worldbank.js"></script>
     <script src="./js/auth_config.js"></script>
     <script src="./js/auth.js"></script>

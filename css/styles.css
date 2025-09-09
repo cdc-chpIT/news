@@ -822,3 +822,22 @@ body {
 .adb-table-container .table td:nth-child(2) {
     width: 40%; /* Tăng độ rộng cho cột tên dự án */
 }
+
+.wb-table {
+    table-layout: fixed; /* Bật chế độ bố cục cố định */
+    width: 100%;         /* Đảm bảo bảng chiếm toàn bộ chiều rộng */
+}
+
+.wb-table th, .wb-table td {
+    word-wrap: break-word; /* Tự động xuống dòng nếu nội dung quá dài */
+}
+
+/* Định nghĩa độ rộng cho từng cột */
+.wb-table th:nth-child(1) { width: 30%; } /* Project Title */
+.wb-table th:nth-child(2) { width: 10%; } /* Country */
+.wb-table th:nth-child(3) { width: 8%; }  /* Project ID */
+.wb-table th:nth-child(4) { width: 12%; } /* Commitment Amount */
+.wb-table th:nth-child(5) { width: 8%; }  /* Status */
+.wb-table th:nth-child(6) { width: 10%; } /* Approval Date */
+.wb-table th:nth-child(7) { width: 10%; } /* Last updated Date */
+.wb-table th:nth-child(8) { width: 12%; } /* Last Stage Reached */
