@@ -1,3 +1,5 @@
+// File: cdc-chpit/news/news-218ec43bcb0d9af4130d53308cae379978fd43b6/js/services/api.js
+
 const API_BASE_URL = config.API_BASE_URL;
 
 const apiService = {
@@ -217,11 +219,11 @@ const apiService = {
         });
     },
     getSavedArticleIds() {
-        return this._request('/users/me/saved-articles/');
+        return this._request('/users/me/saved-articles/', { cache: 'no-cache' });
     },
 
     fetchSavedArticles() {
-        return this._request('/users/me/saved-articles/details');
+        return this._request('/users/me/saved-articles/details', { cache: 'no-cache' });
     },
 
     saveArticle(articleId) {
@@ -238,7 +240,7 @@ const apiService = {
     },
 
     fetchUserProcurements() {
-        return this._request('/user-procurements/', { method: 'GET' });
+        return this._request('/user-procurements/', { method: 'GET', cache: 'no-cache' });
     },
 
     saveUserProcurement(procurementData) {
@@ -267,7 +269,6 @@ const apiService = {
     },
 
     fetchUserKeywords() {
-        // FIX: Ensure this call always gets fresh data from the server
         return this._fetch('/users/me/preferences/keywords', {}, { cache: 'no-cache' });
     },
 
@@ -297,14 +298,11 @@ const apiService = {
             headers['Authorization'] = `Bearer ${token}`;
         }
         
-        // FIX: Không sử dụng encodeURIComponent cho toàn bộ đường dẫn.
-        // Trình duyệt sẽ tự động mã hóa giá trị của tham số `filters` một cách chính xác.
         const url = `${API_BASE_URL}/adb/rss?filters=${filterPath}`;
         
         return fetch(url, { headers })
             .then(res => {
                 if (!res.ok) {
-                    // Cải thiện thông báo lỗi để dễ debug hơn
                     return res.text().then(text => { 
                         throw new Error(`Lỗi từ backend: Status ${res.status} - ${text}`); 
                     });
@@ -313,13 +311,29 @@ const apiService = {
             })
             .catch(error => {
                 console.error("Lỗi khi gọi fetchAdbRssFeed:", error);
-                // Ném lại lỗi để logic trong adb.js có thể bắt được
                 throw error;
             });
     },
     
     fetchWorldBankProjects(params) {
-        // Hàm _fetch đã hỗ trợ tham số dạng mảng, rất tiện lợi
         return this._fetch('/worldbank/projects', params);
+    },
+
+    // --- APIs for User Saved ADB Projects ---
+    getSavedAdbProjects() {
+        return this._request('/adb/saved-projects', { method: 'GET', cache: 'no-cache' });
+    },
+
+    saveAdbProject(projectData) {
+        return this._request('/adb/saved-projects', {
+            method: 'POST',
+            body: JSON.stringify(projectData)
+        });
+    },
+
+    deleteAdbProject(userAdbId) {
+        return this._request(`/adb/saved-projects/${userAdbId}`, {
+            method: 'DELETE'
+        });
     },
 };

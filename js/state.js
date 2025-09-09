@@ -18,6 +18,7 @@ let queryState = {
 
 let savedArticleIds = new Set();
 let savedProcurements = new Map();
+let savedAdbProjects = new Map(); 
 
 // Cập nhật hàm updateQueryState để xử lý đúng
 function updateQueryState(updates, callback) {

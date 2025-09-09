@@ -204,7 +204,7 @@ function injectSavedItemsModal() {
 
     const modalHtml = `
     <div class="modal fade" id="savedItemsModal" tabindex="-1" aria-labelledby="savedItemsModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-scrollable modal-lg">
+        <div class="modal-dialog modal-dialog-scrollable modal-xl">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="savedItemsModalLabel"><i class="bi bi-person-circle me-2"></i>Tài khoản của tôi</h5>
@@ -221,6 +221,11 @@ function injectSavedItemsModal() {
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="saved-procurements-tab" data-bs-toggle="tab" data-bs-target="#saved-procurements-pane" type="button" role="tab" aria-controls="saved-procurements-pane" aria-selected="false">
                                 <i class="bi bi-briefcase-fill me-2"></i>Mua sắm công Đã Lưu
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="saved-adb-tab" data-bs-toggle="tab" data-bs-target="#saved-adb-pane" type="button" role="tab" aria-controls="saved-adb-pane" aria-selected="false">
+                                <i class="bi bi-bank me-2"></i>Dự án ADB Đã Lưu
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
@@ -244,6 +249,9 @@ function injectSavedItemsModal() {
                                 <div class="col-md-4"><select id="saved-procurement-sort" class="form-select"><option value="saved_at_desc">Lưu gần đây nhất</option><option value="published_at_desc">Ngày đăng (mới nhất)</option><option value="published_at_asc">Ngày đăng (cũ nhất)</option></select></div>
                             </div>
                             <div id="saved-procurements-list" class="vstack gap-3"></div>
+                        </div>
+                        <div class="tab-pane fade" id="saved-adb-pane" role="tabpanel" aria-labelledby="saved-adb-tab" tabindex="0">
+                            <div id="saved-adb-projects-list"></div>
                         </div>
                         <div class="tab-pane fade" id="email-settings-pane" role="tabpanel" aria-labelledby="email-settings-tab" tabindex="0">
                             <form id="email-settings-form" onsubmit="return false;">
@@ -356,6 +364,75 @@ function injectAddKeywordModal() {
     document.body.insertAdjacentHTML('beforeend', modalHtml);
 }
 
+/**
+ * Render bảng các dự án ADB đã lưu
+ * @param {Array<object>} projects - Mảng các đối tượng dự án đã lưu
+ */
+function renderSavedAdbProjectsTable(projects) {
+    const container = document.getElementById('saved-adb-projects-list');
+    if (!container) return;
+
+    if (!projects || projects.length === 0) {
+        container.innerHTML = '<div class="alert alert-info text-center">Bạn chưa lưu dự án ADB nào.</div>';
+        return;
+    }
+
+    const headers = [' ', 'Tên dự án', 'Mã dự án', 'Năm phê duyệt', 'Trạng thái', 'Quốc gia', 'Lĩnh vực'];
+    const headersHtml = headers.map(h => `<th>${h}</th>`).join('');
+
+    const rowsHtml = projects.map(p => {
+        // Nút bỏ lưu
+        const unsaveButtonHtml = `
+            <button class="btn btn-sm btn-outline-danger unsave-adb-btn" 
+                    title="Bỏ lưu dự án"
+                    data-user-adb-id="${p.user_adb_id}"
+                    data-project-code="${p.project_code}">
+                <i class="bi bi-trash3-fill"></i>
+            </button>
+        `;
+
+        return `
+            <tr id="saved-adb-row-${p.user_adb_id}">
+                <td class="text-center">${unsaveButtonHtml}</td>
+                <td><a href="${p.project_url}" target="_blank" rel="noopener noreferrer">${p.project_name}</a></td>
+                <td class="text-center">${p.project_code}</td>
+                <td class="text-center">${p.project_approve_year}</td>
+                <td class="text-center"><span class="badge bg-secondary">${p.project_status}</span></td>
+                <td>${p.project_country}</td>
+                <td>${p.project_sector}</td>
+            </tr>
+        `;
+    }).join('');
+
+    container.innerHTML = `
+        <div class="table-responsive">
+            <table class="table table-hover table-bordered table-sm">
+                <thead class="table-light"><tr>${headersHtml}</tr></thead>
+                <tbody>${rowsHtml}</tbody>
+            </table>
+        </div>
+    `;
+}
+
+/**
+ * Tải và hiển thị các dự án ADB đã lưu
+ */
+async function loadSavedAdbProjects() {
+    const container = document.getElementById('saved-adb-projects-list');
+    if (!container) return;
+    container.innerHTML = '<div class="text-center p-5"><div class="spinner-border text-primary"></div></div>';
+    try {
+        const result = await apiService.getSavedAdbProjects();
+        if (result.success && Array.isArray(result.data)) {
+            renderSavedAdbProjectsTable(result.data);
+        } else {
+            throw new Error(result.message || "Không thể tải các dự án ADB đã lưu.");
+        }
+    } catch (error) {
+        container.innerHTML = `<div class="alert alert-danger">${error.message}</div>`;
+    }
+}
+
 
 /**
  * Initializes the authentication UI, showing either the user dropdown or the login button.
@@ -366,15 +443,16 @@ async function initializeAuthUI() {
     const user = getCurrentUser();
 
     if (user) {
-        // FIX: Make data fetching resilient to failures (e.g., new user without a schedule)
         try {
             const results = await Promise.allSettled([
                 apiService.getSavedArticleIds(),
-                apiService.fetchUserProcurements()
+                apiService.fetchUserProcurements(),
+                apiService.getSavedAdbProjects()
             ]);
 
             const articlesResult = results[0];
             const procurementsResult = results[1];
+            const adbProjectsResult = results[2];
 
             if (articlesResult.status === 'fulfilled' && articlesResult.value.success) {
                 savedArticleIds = new Set(articlesResult.value.data);
@@ -390,6 +468,16 @@ async function initializeAuthUI() {
             } else if (procurementsResult.status === 'rejected') {
                 console.error("Could not fetch saved procurements:", procurementsResult.reason);
             }
+
+            if (adbProjectsResult.status === 'fulfilled' && adbProjectsResult.value.success) {
+                savedAdbProjects.clear();
+                adbProjectsResult.value.data.forEach(item => {
+                    savedAdbProjects.set(item.project_code, item.user_adb_id);
+                });
+            } else if (adbProjectsResult.status === 'rejected') {
+                console.error("Could not fetch saved ADB projects:", adbProjectsResult.reason);
+            }
+
         } catch (error) {
             console.error("An unexpected error occurred during initial data fetch:", error);
         }
@@ -548,6 +636,7 @@ function setupModalEventListeners(modalElement) {
             }
             if(event.target.id === 'saved-articles-tab') loadSavedArticles();
             if(event.target.id === 'saved-procurements-tab') loadSavedProcurements();
+            if(event.target.id === 'saved-adb-tab') loadSavedAdbProjects();
         });
     });
 
@@ -558,14 +647,13 @@ function setupModalEventListeners(modalElement) {
     document.getElementById('emailScheduleActive')?.addEventListener('change', (e) => {
         const isChecked = e.target.checked;
         document.getElementById('email-schedule-fieldset').disabled = !isChecked;
-        // Thêm logic để disable/enable các nút con
         document.querySelectorAll('#email-content-options .form-check-input').forEach(input => {
             input.disabled = !isChecked;
         });
     });
 
     // Listen for clicks on unsave buttons (for articles and procurements)
-    modalElement.addEventListener('click', handleUnsaveActions);
+    modalElement.addEventListener('click', handleModalClickActions);
 
     // Listen for click on "Add New Keyword" button
     document.getElementById('add-new-keyword-btn')?.addEventListener('click', async () => {
@@ -611,7 +699,6 @@ function setupModalEventListeners(modalElement) {
             const result = await apiService.createKeyword(data);
             if (result.success) {
                 addKeywordModalInstance.hide();
-                // Show success message in the main modal's alert area
                 if (emailSettingsAlertContainer) {
                     emailSettingsAlertContainer.innerHTML = `<div class="alert alert-success alert-dismissible fade show">Đã thêm từ khóa mới thành công!<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>`;
                 }
@@ -635,15 +722,12 @@ function setupModalEventListeners(modalElement) {
             const tagToRemove = document.querySelector(`.keyword-email-tag[data-custom-keyword-id="${customKeywordId}"]`);
             
             try {
-                // No need to call API here, saving is handled by the main save button.
-                // Just move the element back to the available list.
                 const categoryId = tagToRemove.dataset.categoryId || 'uncategorized';
                 const availableList = document.querySelector(`.email-keywords-list[data-category-id="${categoryId}"]`);
                 if (availableList) {
-                    tagToRemove.querySelector('.delete-keyword-btn').remove(); // Remove the 'x' button
+                    tagToRemove.querySelector('.delete-keyword-btn').remove();
                     availableList.appendChild(tagToRemove);
                 } else {
-                    // Fallback if the original category list isn't found
                     tagToRemove.remove();
                 }
             } catch (error) {
@@ -651,13 +735,11 @@ function setupModalEventListeners(modalElement) {
             }
         } else if (tag) {
             const selectedContainer = document.getElementById('selected-keywords-container');
-            // If the tag is not already in the selected container, move it
             if (tag.parentElement !== selectedContainer) {
-                // Add the 'x' button for removal
                 const closeBtn = document.createElement('button');
                 closeBtn.type = 'button';
                 closeBtn.className = 'btn-close delete-keyword-btn';
-                closeBtn.dataset.customKeywordId = tag.dataset.customKeywordId; // Carry over ID
+                closeBtn.dataset.customKeywordId = tag.dataset.customKeywordId;
                 tag.appendChild(closeBtn);
                 selectedContainer.appendChild(tag);
             }
@@ -684,7 +766,6 @@ async function populateEmailSettingsForm(clearAlert = true) {
     availableKeywordsArea.innerHTML = `<div class="text-center"><div class="spinner-border spinner-border-sm"></div></div>`;
     selectedKeywordsContainer.innerHTML = '';
 
-    // FIX: Step 1 - Fetch schedule separately as it can fail for new users
      try {
         const scheduleResult = await apiService.fetchUserSchedule();
         if (scheduleResult.success && scheduleResult.data) {
@@ -699,16 +780,13 @@ async function populateEmailSettingsForm(clearAlert = true) {
             emailContentNews.checked = send_news_summary;
             emailContentProcurement.checked = send_procurement_summary;
 
-            // Vô hiệu hóa các nút con nếu switch chính tắt
             emailContentNews.disabled = !is_active;
             emailContentProcurement.disabled = !is_active;
 
             document.getElementById('emailTimeOfDay').value = time_of_day || '';
             
             if (days_of_week && Array.isArray(days_of_week)) {
-                // Reset all day checkboxes first
                 document.querySelectorAll('#emailDaysOfWeek .form-check-input').forEach(chk => chk.checked = false);
-                // Then check the ones from the API
                 days_of_week.forEach(day => {
                     const formattedDay = day.charAt(0).toUpperCase() + day.slice(1).toLowerCase();
                     const dayCheckbox = document.querySelector(`input[value="${formattedDay}"]`);
@@ -720,7 +798,6 @@ async function populateEmailSettingsForm(clearAlert = true) {
         console.warn("Could not fetch user schedule (this is expected for new users):", error.message);
     }
 
-    // FIX: Step 2 - Fetch keywords and categories, which are essential for the UI
     try {
         const [categoriesResult, allKeywordsResult, userKeywordsResult] = await Promise.all([
             apiService.fetchCategories(),
@@ -728,7 +805,6 @@ async function populateEmailSettingsForm(clearAlert = true) {
             apiService.fetchUserKeywords()
         ]);
 
-        // Populate keywords (The rest of the logic remains the same)
         const categories = categoriesResult.success ? categoriesResult.data : [];
         const allKeywords = allKeywordsResult.success ? allKeywordsResult.data : [];
         const userKeywords = userKeywordsResult.success ? userKeywordsResult.data : [];
@@ -859,19 +935,20 @@ async function loadSavedProcurements() {
 }
 
 /**
- * Handles click events for unsaving articles and procurements within the modal.
+ * Handles click events for unsaving items within the modal.
  * @param {Event} event - The click event.
  */
-async function handleUnsaveActions(event) {
+async function handleModalClickActions(event) {
     const unsaveArticleBtn = event.target.closest('.save-icon-container');
     const unsaveProcurementBtn = event.target.closest('.unsave-procurement-btn');
+    const unsaveAdbBtn = event.target.closest('.unsave-adb-btn');
     
-    if (!unsaveArticleBtn && !unsaveProcurementBtn) return;
+    if (!unsaveArticleBtn && !unsaveProcurementBtn && !unsaveAdbBtn) return;
 
     const modalAlertContainer = document.getElementById('modal-alert-container');
     
     const fadeOutAndRemove = (element) => {
-        const card = element.closest('.card');
+        const card = element.closest('.card, tr'); // Handle both cards and table rows
         if (card) {
             card.style.transition = 'opacity 0.3s ease';
             card.style.opacity = '0';
@@ -881,8 +958,10 @@ async function handleUnsaveActions(event) {
     
     const checkAndShowEmptyMessage = (listElement, type) => {
         setTimeout(() => {
-            if (listElement.children.length === 0) {
-                listElement.innerHTML = `<div class="alert alert-info text-center">Bạn chưa lưu ${type === 'article' ? 'bài viết' : 'mục'} nào.</div>`;
+            const container = listElement.querySelector('tbody') || listElement;
+            if (container.children.length === 0) {
+                const message = type === 'article' ? 'bài viết' : (type === 'procurement' ? 'mục' : 'dự án');
+                listElement.innerHTML = `<div class="alert alert-info text-center">Bạn chưa lưu ${message} nào.</div>`;
             }
         }, 350);
     };
@@ -891,13 +970,12 @@ async function handleUnsaveActions(event) {
         event.preventDefault();
         event.stopPropagation();
         const articleId = unsaveArticleBtn.dataset.articleId;
-        unsaveArticleBtn.style.pointerEvents = 'none'; // Prevent double clicks
+        unsaveArticleBtn.style.pointerEvents = 'none';
         try {
             await apiService.unsaveArticle(articleId);
             fadeOutAndRemove(unsaveArticleBtn);
             savedArticleIds.delete(parseInt(articleId, 10));
             checkAndShowEmptyMessage(document.getElementById('saved-articles-list'), 'article');
-            // Update the save icon on the main news page if it exists
             const mainPageIcon = document.querySelector(`.article-card[data-article-id-wrapper="${articleId}"] .save-icon-container`);
             if (mainPageIcon) {
                 mainPageIcon.classList.remove('saved');
@@ -906,7 +984,7 @@ async function handleUnsaveActions(event) {
             }
         } catch (error) {
             modalAlertContainer.innerHTML = `<div class="alert alert-danger alert-dismissible fade show">Lỗi: ${error.message}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>`;
-            unsaveArticleBtn.style.pointerEvents = 'auto'; // Re-enable on error
+            unsaveArticleBtn.style.pointerEvents = 'auto';
         }
     }
 
@@ -919,7 +997,6 @@ async function handleUnsaveActions(event) {
             fadeOutAndRemove(unsaveProcurementBtn);
             savedProcurements.delete(itemCode);
             checkAndShowEmptyMessage(document.getElementById('saved-procurements-list'), 'procurement');
-            // Update the save button on the scraper page if it exists
             const mainPageBtn = document.querySelector(`.save-procurement-btn[data-item-code="${itemCode}"]`);
             if (mainPageBtn) {
                 mainPageBtn.dataset.isSaved = 'false';
@@ -928,7 +1005,29 @@ async function handleUnsaveActions(event) {
             }
         } catch (error) {
              modalAlertContainer.innerHTML = `<div class="alert alert-danger alert-dismissible fade show">Lỗi: ${error.message}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>`;
-             unsaveProcurementBtn.disabled = false; // Re-enable on error
+             unsaveProcurementBtn.disabled = false;
+        }
+    }
+
+    if (unsaveAdbBtn) {
+        event.preventDefault();
+        const { userAdbId, projectCode } = unsaveAdbBtn.dataset;
+        unsaveAdbBtn.disabled = true;
+        try {
+            await apiService.deleteAdbProject(userAdbId);
+            fadeOutAndRemove(unsaveAdbBtn);
+            savedAdbProjects.delete(projectCode);
+            checkAndShowEmptyMessage(document.getElementById('saved-adb-projects-list'), 'adb');
+            const mainPageBtn = document.querySelector(`.save-adb-btn[data-project-code="${projectCode}"]`);
+            if (mainPageBtn) {
+                mainPageBtn.dataset.isSaved = 'false';
+                mainPageBtn.dataset.userAdbId = '';
+                mainPageBtn.title = 'Lưu dự án';
+                mainPageBtn.querySelector('i').className = 'bi bi-bookmark';
+            }
+        } catch (error) {
+            modalAlertContainer.innerHTML = `<div class="alert alert-danger alert-dismissible fade show">Lỗi: ${error.message}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>`;
+            unsaveAdbBtn.disabled = false;
         }
     }
 }

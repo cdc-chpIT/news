@@ -1,6 +1,6 @@
 // worldbank.js
 document.addEventListener('DOMContentLoaded', () => {
-    // === STATE (đã đơn giản hóa) ===
+    // === STATE ===
     let state = {
         currentPage: 1,
         pageSize: 20,
@@ -73,7 +73,6 @@ document.addEventListener('DOMContentLoaded', () => {
         dom.resultsContainer.innerHTML = `<div class="text-center p-5"><div class="spinner-border text-primary"></div></div>`;
         dom.paginationContainer.innerHTML = '';
 
-        // SỬA LỖI: Xóa các tham số filter
         const params = {
             page: state.currentPage,
             size: state.pageSize,

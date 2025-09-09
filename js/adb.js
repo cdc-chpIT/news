@@ -81,7 +81,6 @@ document.addEventListener('DOMContentLoaded', () => {
         {
             title: 'Fund',
             id: 'fund',
-            // **FIXED**: Using the full list of funds with their exact names as IDs
             options: [
                 { name: 'Asian Development Fund', id: 'Asian Development Fund' },
                 { name: 'Ordinary capital resources', id: 'Ordinary capital resources' },
@@ -226,18 +225,45 @@ document.addEventListener('DOMContentLoaded', () => {
             dom.resultsContainer.innerHTML = '<div class="alert alert-info text-center">Không có dự án nào phù hợp với bộ lọc đã chọn.</div>';
             return;
         }
-        const headers = ['Tên dự án', 'Mã dự án', 'Năm phê duyệt', 'Trạng thái', 'Quốc gia', 'Lĩnh vực'];
+        const headers = ['Lưu', 'Tên dự án', 'Mã dự án', 'Năm phê duyệt', 'Trạng thái', 'Quốc gia', 'Lĩnh vực'];
         const headersHtml = headers.map(h => `<th scope="col">${h}</th>`).join('');
-        const rowsHtml = projectsForPage.map(p => `
-            <tr>
-                <td><a href="${p.link}" target="_blank" rel="noopener noreferrer" title="Xem chi tiết dự án">${p.title}</a></td>
-                <td class="text-center">${p.details['Project number'] || 'N/A'}</td>
-                <td class="text-center">${p.details['Approval year'] || 'N/A'}</td>
-                <td class="text-center">${getStatusBadge(p.details['Status'])}</td>
-                <td>${p.details['Countries'] || 'N/A'}</td>
-                <td>${p.details['Sectors'] || 'N/A'}</td>
-            </tr>
-        `).join('');
+        
+        const rowsHtml = projectsForPage.map(p => {
+            const projectCode = p.details['Project number'] || '';
+            const isSaved = savedAdbProjects.has(projectCode);
+            const userAdbId = isSaved ? savedAdbProjects.get(projectCode) : '';
+            const saveIconClass = isSaved ? 'bi-bookmark-check-fill text-success' : 'bi-bookmark';
+            const saveTitle = isSaved ? 'Bỏ lưu dự án' : 'Lưu dự án';
+
+             const saveButtonHtml = `
+                <button class="btn btn-light save-adb-btn p-1" // <-- Thêm p-1 để giảm padding, hoặc tạo class riêng như trên
+                        title="${saveTitle}"
+                        data-is-saved="${isSaved}"
+                        data-user-adb-id="${userAdbId}"
+                        data-project-code="${projectCode}"
+                        data-project-name="${p.title.replace(/"/g, '&quot;')}"
+                        data-project-approve-year="${p.details['Approval year'] || ''}"
+                        data-project-status="${p.details['Status'] || ''}"
+                        data-project-country="${p.details['Countries'] || ''}"
+                        data-project-sector="${p.details['Sectors'] || ''}"
+                        data-project-url="${p.link}">
+                    <i class="bi ${saveIconClass}" style="font-size: 0.9rem;"></i>
+                </button>
+            `;
+
+            return `
+                <tr>
+                    <td class="text-center">${saveButtonHtml}</td>
+                    <td><a href="${p.link}" target="_blank" rel="noopener noreferrer" title="Xem chi tiết dự án">${p.title}</a></td>
+                    <td class="text-center">${projectCode}</td>
+                    <td class="text-center">${p.details['Approval year'] || 'N/A'}</td>
+                    <td class="text-center">${getStatusBadge(p.details['Status'])}</td>
+                    <td>${p.details['Countries'] || 'N/A'}</td>
+                    <td>${p.details['Sectors'] || 'N/A'}</td>
+                </tr>
+            `;
+        }).join('');
+
         dom.resultsContainer.innerHTML = `
             <div class="table-responsive adb-table-container">
                 <table class="table table-hover table-bordered">
@@ -276,30 +302,19 @@ document.addEventListener('DOMContentLoaded', () => {
     // === LOGIC FUNCTIONS ===
     
     function buildFilterPath() {
-        // **FIXED**: Định nghĩa thứ tự CỐ ĐỊNH và CHÍNH XÁC của các bộ lọc.
         const filterOrder = ['country', 'sector', 'theme', 'type', 'status', 'year', 'fund'];
-
         const pathParts = filterOrder.map(filterKey => {
             const selected = state.filters[filterKey];
-
-            // Nếu không có mục nào được chọn, trả về 'all'.
             if (!selected || selected.size === 0) {
                 return 'all';
             }
-
-            // Xử lý trường hợp đặc biệt cho định dạng của 'fund'.
             if (filterKey === 'fund') {
-                // Nối các fund đã chọn bằng dấu phẩy ',' và luôn thêm ',all' ở cuối.
                 return Array.from(selected).join(',') + ',all';
             } 
-            
-            // Đối với tất cả các bộ lọc khác, nối các giá trị bằng dấu cộng '+'.
             else {
                 return Array.from(selected).join('+');
             }
         });
-
-        // Nối tất cả các phần lại với nhau bằng dấu gạch chéo '/'.
         return pathParts.join('/');
     }
 
@@ -340,9 +355,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 categoryText.split('|').forEach(part => {
                     const [key, ...valueParts] = part.split(':');
-                    const value = valueParts.join(':').trim(); // Lấy giá trị và trim()
+                    const value = valueParts.join(':').trim(); 
                     
-                    // Chỉ thêm vào object nếu cả key và value đều có nội dung
                     if (key && value) { 
                         details[key.trim()] = value;
                     }
@@ -393,7 +407,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     } else {
                         state.filters[group].delete(value);
                     }
-                    // Cập nhật bộ đếm ngay khi checkbox thay đổi
                     updateFilterCounts();
                 }
             });
@@ -407,17 +420,79 @@ document.addEventListener('DOMContentLoaded', () => {
                 else if (target.id === 'clear-filters-btn') {
                     Object.values(state.filters).forEach(set => set.clear());
                     dom.filterSidebarContainer.querySelectorAll('.filter-checkbox:checked').forEach(cb => cb.checked = false);
-                    updateFilterCounts(); // Reset bộ đếm về 0
+                    updateFilterCounts(); 
                     fetchAndRender(); 
                 }
             });
         }
+
+        // Event listener cho nút Lưu
+        dom.resultsContainer.addEventListener('click', async (e) => {
+            const saveBtn = e.target.closest('.save-adb-btn');
+            if (!saveBtn) return;
+
+            if (!getCurrentUser()) {
+                showAlert('Vui lòng đăng nhập để sử dụng tính năng này.', 'warning');
+                return;
+            }
+
+            const { 
+                isSaved, userAdbId, projectCode, projectName, 
+                projectApproveYear, projectStatus, projectCountry, 
+                projectSector, projectUrl 
+            } = saveBtn.dataset;
+            
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = `<span class="spinner-border spinner-border-sm"></span>`;
+            
+            try {
+                if (isSaved === 'true') {
+                    // --- Logic Bỏ lưu ---
+                    await apiService.deleteAdbProject(userAdbId);
+                    savedAdbProjects.delete(projectCode);
+                    showAlert('Đã bỏ lưu dự án.', 'info');
+                    saveBtn.dataset.isSaved = 'false';
+                    saveBtn.dataset.userAdbId = '';
+                    saveBtn.title = 'Lưu dự án';
+                } else {
+                    // --- Logic Lưu ---
+                    const payload = { 
+                        project_name: projectName, 
+                        project_code: projectCode, 
+                        project_approve_year: projectApproveYear, 
+                        project_status: projectStatus, 
+                        project_country: projectCountry, 
+                        project_sector: projectSector, 
+                        project_url: projectUrl 
+                    };
+                    const result = await apiService.saveAdbProject(payload);
+                    
+                    if (result.success && result.data) {
+                        savedAdbProjects.set(projectCode, result.data.user_adb_id);
+                        showAlert('Lưu dự án thành công.', 'success');
+                        saveBtn.dataset.isSaved = 'true';
+                        saveBtn.dataset.userAdbId = result.data.user_adb_id;
+                        saveBtn.title = 'Bỏ lưu dự án';
+                    }
+                }
+            } catch(error) {
+                showAlert(error.message, 'danger');
+                saveBtn.dataset.isSaved = isSaved; 
+                saveBtn.title = isSaved === 'true' ? 'Bỏ lưu dự án' : 'Lưu dự án';
+            } finally {
+                saveBtn.disabled = false;
+                const iconClass = saveBtn.dataset.isSaved === 'true' ? 'bi bi-bookmark-check-fill text-success' : 'bi bi-bookmark';
+                saveBtn.innerHTML = `<i class="${iconClass}"></i>`;
+            }
+        });
     }
 
     async function initialize() {
         renderLayout();
         renderFilterSidebar();
         setupEventListeners();
+        
+        await initializeAuthUI(); 
         await fetchAndRender(); 
     }
 

@@ -805,3 +805,20 @@ body {
     line-height: 1;    /* Canh chữ theo chiều dọc */
     text-align: center;
 }
+
+.save-adb-btn {
+    padding: 0.2rem 0.5rem; /* Giảm khoảng đệm của nút */
+    font-size: 1rem;       /* Đảm bảo icon có kích thước hợp lý */
+}
+
+.adb-table-container .table th:nth-child(1),
+.adb-table-container .table td:nth-child(1) {
+    width: 5%;
+    min-width: 60px;
+}
+
+/* Cột "Tên dự án" (cột 2) - Rất rộng */
+.adb-table-container .table th:nth-child(2),
+.adb-table-container .table td:nth-child(2) {
+    width: 40%; /* Tăng độ rộng cho cột tên dự án */
+}
