@@ -319,6 +319,23 @@ const apiService = {
         return this._fetch('/worldbank/projects', params);
     },
 
+    getSavedWorldBankProjects() {
+        return this._request('/worldbank/saved-projects', { method: 'GET', cache: 'no-cache' });
+    },
+
+    saveWorldBankProject(projectData) {
+        return this._request('/worldbank/saved-projects', {
+            method: 'POST',
+            body: JSON.stringify(projectData)
+        });
+    },
+
+    deleteWorldBankProject(userWorldbankId) {
+        return this._request(`/worldbank/saved-projects/${userWorldbankId}`, {
+            method: 'DELETE'
+        });
+    },
+
     // --- APIs for User Saved ADB Projects ---
     getSavedAdbProjects() {
         return this._request('/adb/saved-projects', { method: 'GET', cache: 'no-cache' });

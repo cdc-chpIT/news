@@ -229,6 +229,11 @@ function injectSavedItemsModal() {
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="saved-wb-tab" data-bs-toggle="tab" data-bs-target="#saved-wb-pane" type="button" role="tab" aria-controls="saved-wb-pane" aria-selected="false">
+                                <i class="bi bi-globe2 me-2"></i>Dự án World Bank Đã Lưu
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
                             <button class="nav-link" id="email-settings-tab" data-bs-toggle="tab" data-bs-target="#email-settings-pane" type="button" role="tab" aria-controls="email-settings-pane" aria-selected="false">
                                 <i class="bi bi-envelope-at-fill me-2"></i>Cài đặt Email
                             </button>
@@ -252,6 +257,9 @@ function injectSavedItemsModal() {
                         </div>
                         <div class="tab-pane fade" id="saved-adb-pane" role="tabpanel" aria-labelledby="saved-adb-tab" tabindex="0">
                             <div id="saved-adb-projects-list"></div>
+                        </div>
+                        <div class="tab-pane fade" id="saved-wb-pane" role="tabpanel" aria-labelledby="saved-wb-tab" tabindex="0">
+                            <div id="saved-wb-projects-list"></div>
                         </div>
                         <div class="tab-pane fade" id="email-settings-pane" role="tabpanel" aria-labelledby="email-settings-tab" tabindex="0">
                             <form id="email-settings-form" onsubmit="return false;">
@@ -433,6 +441,80 @@ async function loadSavedAdbProjects() {
     }
 }
 
+/**
+ * Render bảng các dự án World Bank đã lưu
+ * @param {Array<object>} projects - Mảng các đối tượng dự án đã lưu
+ */
+function renderSavedWorldBankProjectsTable(projects) {
+    const container = document.getElementById('saved-wb-projects-list');
+    if (!container) return;
+
+    if (!projects || projects.length === 0) {
+        container.innerHTML = '<div class="alert alert-info text-center">Bạn chưa lưu dự án World Bank nào.</div>';
+        return;
+    }
+
+    const headers = [' ', 'Tên dự án', 'Mã', 'Quốc gia', 'Số tiền', 'Trạng thái', 'Ngày phê duyệt', 'Cập nhật cuối', 'Giai đoạn cuối'];
+    const headersHtml = headers.map(h => `<th>${h}</th>`).join('');
+
+    const rowsHtml = projects.map(p => {
+        const unsaveButtonHtml = `
+            <button class="btn btn-sm btn-outline-danger unsave-wb-btn" 
+                    title="Bỏ lưu dự án"
+                    data-user-wb-id="${p.user_worldbank_id}"
+                    data-project-id="${p.project_id}">
+                <i class="bi bi-trash3-fill"></i>
+            </button>
+        `;
+
+        const approvalDate = p.project_approve_year ? new Date(p.project_approve_year).toLocaleDateString('en-GB') : 'N/A';
+        const lastUpdate = p.project_last_update ? new Date(p.project_last_update).toLocaleDateString('en-GB') : 'N/A';
+
+        return `
+            <tr id="saved-wb-row-${p.user_worldbank_id}">
+                <td class="text-center">${unsaveButtonHtml}</td>
+                <td><a href="${p.project_url}" target="_blank" rel="noopener noreferrer">${p.project_name}</a></td>
+                <td class="text-center">${p.project_id || 'N/A'}</td>
+                <td>${p.project_country || 'N/A'}</td>
+                <td>${p.project_commitmentamount || 'N/A'}</td>
+                <td class="text-center"><span class="badge bg-secondary">${p.project_status || 'N/A'}</span></td>
+                <td class="text-center">${approvalDate}</td>
+                <td class="text-center">${lastUpdate}</td>
+                <td>${p.project_last_stage || 'N/A'}</td>
+            </tr>
+        `;
+    }).join('');
+
+    container.innerHTML = `
+        <div class="table-responsive">
+            <table class="table table-hover table-bordered table-sm">
+                <thead class="table-light"><tr>${headersHtml}</tr></thead>
+                <tbody>${rowsHtml}</tbody>
+            </table>
+        </div>
+    `;
+}
+
+// ADD THIS NEW FUNCTION to load the data for the modal
+async function loadSavedWorldBankProjects() {
+    const container = document.getElementById('saved-wb-projects-list');
+    if (!container) return;
+    container.innerHTML = '<div class="text-center p-5"><div class="spinner-border text-primary"></div></div>';
+    try {
+        const result = await apiService.getSavedWorldBankProjects();
+        if (result.success && Array.isArray(result.data)) {
+            allSavedWorldBankProjects = result.data;
+            renderSavedWorldBankProjectsTable(allSavedWorldBankProjects);
+        } else {
+            throw new Error(result.message || "Không thể tải các dự án World Bank đã lưu.");
+        }
+    } catch (error) {
+        container.innerHTML = `<div class="alert alert-danger">${error.message}</div>`;
+    }
+}
+
+
+
 
 /**
  * Initializes the authentication UI, showing either the user dropdown or the login button.
@@ -447,7 +529,8 @@ async function initializeAuthUI() {
             const results = await Promise.allSettled([
                 apiService.getSavedArticleIds(),
                 apiService.fetchUserProcurements(),
-                apiService.getSavedAdbProjects()
+                apiService.getSavedAdbProjects(),
+                apiService.getSavedWorldBankProjects()
             ]);
 
             const articlesResult = results[0];
@@ -477,6 +560,17 @@ async function initializeAuthUI() {
             } else if (adbProjectsResult.status === 'rejected') {
                 console.error("Could not fetch saved ADB projects:", adbProjectsResult.reason);
             }
+
+            const wbProjectsResult = results[3]; 
+            if (wbProjectsResult.status === 'fulfilled' && wbProjectsResult.value.success) {
+                savedWorldBankProjects.clear();
+                wbProjectsResult.value.data.forEach(item => {
+                    savedWorldBankProjects.set(item.project_id, item.user_worldbank_id);
+                });
+            } else if (wbProjectsResult.status === 'rejected') {
+                console.error("Could not fetch saved World Bank projects:", wbProjectsResult.reason);
+            }
+
 
         } catch (error) {
             console.error("An unexpected error occurred during initial data fetch:", error);
@@ -637,6 +731,7 @@ function setupModalEventListeners(modalElement) {
             if(event.target.id === 'saved-articles-tab') loadSavedArticles();
             if(event.target.id === 'saved-procurements-tab') loadSavedProcurements();
             if(event.target.id === 'saved-adb-tab') loadSavedAdbProjects();
+            if(event.target.id === 'saved-wb-tab') loadSavedWorldBankProjects();
         });
     });
 
@@ -942,8 +1037,9 @@ async function handleModalClickActions(event) {
     const unsaveArticleBtn = event.target.closest('.save-icon-container');
     const unsaveProcurementBtn = event.target.closest('.unsave-procurement-btn');
     const unsaveAdbBtn = event.target.closest('.unsave-adb-btn');
+    const unsaveWbBtn = event.target.closest('.unsave-wb-btn');
     
-    if (!unsaveArticleBtn && !unsaveProcurementBtn && !unsaveAdbBtn) return;
+    if (!unsaveArticleBtn && !unsaveProcurementBtn && !unsaveAdbBtn && !unsaveWbBtn) return;
 
     const modalAlertContainer = document.getElementById('modal-alert-container');
     
@@ -1028,6 +1124,27 @@ async function handleModalClickActions(event) {
         } catch (error) {
             modalAlertContainer.innerHTML = `<div class="alert alert-danger alert-dismissible fade show">Lỗi: ${error.message}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>`;
             unsaveAdbBtn.disabled = false;
+        }
+    }
+    if (unsaveWbBtn) {
+        event.preventDefault();
+        const { userWbId, projectId } = unsaveWbBtn.dataset;
+        unsaveWbBtn.disabled = true;
+        try {
+            await apiService.deleteWorldBankProject(userWbId);
+            fadeOutAndRemove(unsaveWbBtn);
+            savedWorldBankProjects.delete(projectId);
+            checkAndShowEmptyMessage(document.getElementById('saved-wb-projects-list'), 'wb');
+            const mainPageBtn = document.querySelector(`.save-wb-btn[data-project-id="${projectId}"]`);
+            if (mainPageBtn) {
+                mainPageBtn.dataset.isSaved = 'false';
+                mainPageBtn.dataset.userWbId = '';
+                mainPageBtn.title = 'Lưu dự án';
+                mainPageBtn.querySelector('i').className = 'bi bi-bookmark';
+            }
+        } catch (error) {
+            modalAlertContainer.innerHTML = `<div class="alert alert-danger alert-dismissible fade show">Lỗi: ${error.message}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>`;
+            unsaveWbBtn.disabled = false;
         }
     }
 }

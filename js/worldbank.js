@@ -1,4 +1,5 @@
-// File: js/worldbank.js
+// File: cdc-chpit/news/news-93d3a11ad347fed8c1b707f48d733b1f118ab226/js/worldbank.js
+
 document.addEventListener('DOMContentLoaded', () => {
     // === STATE ===
     let state = {
@@ -41,10 +42,11 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     
     const HEADERS_CONFIG = [
+        { key: '', display: 'Lưu' },
         { key: 'project_name', display: 'Project Title' },
         { key: 'countryshortname', display: 'Country' },
         { key: 'id', display: 'Project ID' },
-        { key: 'totalcommamt', display: 'Commitment Amount' },
+        { key: 'totalCommitmentAmount', display: 'Commitment Amount' },
         { key: 'projectstatusdisplay', display: 'Status' },
         { key: 'boardapprovaldate', display: 'Approval Date' },
         { key: 'proj_last_upd_date', display: 'Last updated Date' },
@@ -56,6 +58,15 @@ document.addEventListener('DOMContentLoaded', () => {
         dom.header.innerHTML = createHeader('World Bank Projects');
         dom.navbar.innerHTML = createNavbar('worldbank');
         initializeAuthUI();
+    }
+
+    function showAlert(message, type = 'danger') {
+        dom.alertContainer.innerHTML = '';
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+        alertDiv.setAttribute('role', 'alert');
+        alertDiv.innerHTML = `${message}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>`;
+        dom.alertContainer.prepend(alertDiv);
     }
     
     function populateAndInitFilters() {
@@ -99,6 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const headersHtml = HEADERS_CONFIG.map(h => {
             const isSorting = state.sortBy === h.key;
+            if (!h.key) return `<th class="text-center">${h.display}</th>`;
             const iconClass = isSorting ? (state.sortOrder === 'asc' ? 'bi-caret-up-fill sort-icon-active' : 'bi-caret-down-fill sort-icon-active') : 'bi-caret-down-fill sort-icon-default';
             return `<th class="sortable-header" data-sort-by="${h.key}" style="cursor: pointer;">${h.display}<i class="bi ${iconClass} sort-icon"></i></th>`;
         }).join('');
@@ -111,7 +123,41 @@ document.addEventListener('DOMContentLoaded', () => {
             const totalCommitment = totalAmountValue + grantAmountValue;
             const commitmentAmount = totalCommitment > 0 ? `$${totalCommitment.toLocaleString('en-US')}` : 'N/A';
             const projectStatus = p.projectstatusdisplay || p.status || 'N/A';
-            return `<tr><td><a href="https://projects.worldbank.org/en/projects-operations/project-detail/${p.id}" target="_blank" rel="noopener noreferrer">${p.project_name || 'N/A'}</a></td><td>${p.countryshortname || 'N/A'}</td><td>${p.id || 'N/A'}</td><td>${commitmentAmount}</td><td>${projectStatus}</td><td>${approvalDate}</td><td>${lastUpdatedDate}</td><td>${p.last_stage_reached_name || 'N/A'}</td></tr>`;
+            
+            const isSaved = savedWorldBankProjects.has(p.id);
+            const userWbId = isSaved ? savedWorldBankProjects.get(p.id) : '';
+            const saveIconClass = isSaved ? 'bi-bookmark-check-fill text-success' : 'bi-bookmark';
+            const saveTitle = isSaved ? 'Bỏ lưu dự án' : 'Lưu dự án';
+
+            const saveButtonHtml = `
+                <button class="btn btn-light save-wb-btn p-1"
+                        title="${saveTitle}"
+                        data-is-saved="${isSaved}"
+                        data-user-wb-id="${userWbId}"
+                        data-project-id="${p.id || ''}"
+                        data-project-name="${(p.project_name || '').replace(/"/g, '&quot;')}"
+                        data-project-country="${p.countryshortname || ''}"
+                        data-project-commitmentamount="${commitmentAmount}"
+                        data-project-status="${projectStatus}"
+                        data-project-approve-year="${p.boardapprovaldate || ''}" 
+                        data-project-last-update="${p.proj_last_upd_date || ''}"
+                        data-project-last-stage="${p.last_stage_reached_name || ''}"
+                        data-project-url="https://projects.worldbank.org/en/projects-operations/project-detail/${p.id}">
+                    <i class="bi ${saveIconClass}" style="font-size: 0.9rem;"></i>
+                </button>
+            `;
+            
+            return `<tr>
+                        <td class="text-center">${saveButtonHtml}</td>
+                        <td><a href="https://projects.worldbank.org/en/projects-operations/project-detail/${p.id}" target="_blank" rel="noopener noreferrer">${p.project_name || 'N/A'}</a></td>
+                        <td>${p.countryshortname || 'N/A'}</td>
+                        <td>${p.id || 'N/A'}</td>
+                        <td>${commitmentAmount}</td>
+                        <td>${projectStatus}</td>
+                        <td>${approvalDate}</td>
+                        <td>${lastUpdatedDate}</td>
+                        <td>${p.last_stage_reached_name || 'N/A'}</td>
+                    </tr>`;
         }).join('');
 
         const startItem = (state.currentPage - 1) * state.pageSize + 1;
@@ -152,21 +198,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function sortAndRender() {
         filteredProjects.sort((a, b) => {
-            let valA = a[state.sortBy] || '';
-            let valB = b[state.sortBy] || '';
-            
-            if (state.sortBy.includes('date')) {
-                valA = valA ? new Date(valA).getTime() : 0;
-                valB = valB ? new Date(valB).getTime() : 0;
-            } else if (typeof valA === 'string') {
-                valA = valA.toLowerCase();
-                valB = valB.toLowerCase();
-            }
+            let valA = a[state.sortBy];
+            let valB = b[state.sortBy];
 
-            if (valA < valB) return state.sortOrder === 'asc' ? -1 : 1;
-            if (valA > valB) return state.sortOrder === 'asc' ? 1 : -1;
-            return 0;
+            // Handle cases where values might be null or undefined
+            valA = valA == null ? '' : valA;
+            valB = valB == null ? '' : valB;
+
+            // Specific logic for different data types
+            if (state.sortBy === 'totalCommitmentAmount') {
+                return (valA || 0) - (valB || 0);
+            } else if (state.sortBy.includes('date')) {
+                const dateA = valA ? new Date(valA).getTime() : 0;
+                const dateB = valB ? new Date(valB).getTime() : 0;
+                return dateA - dateB;
+            } else {
+                // Default to string comparison
+                return valA.toString().toLowerCase().localeCompare(valB.toString().toLowerCase());
+            }
         });
+
+        // Apply sort order (asc/desc)
+        if (state.sortOrder === 'desc') {
+            filteredProjects.reverse();
+        }
+        
         renderCurrentPage();
     }
 
@@ -187,16 +243,28 @@ document.addEventListener('DOMContentLoaded', () => {
         
         try {
             const result = await apiService.fetchWorldBankProjects({ sort_by: 'boardapprovaldate', sort_order: 'desc' });
-            allProjects = Object.values(result.projects || {});
+            const projectsData = Object.values(result.projects || {});
+
+            // Add the calculated 'totalCommitmentAmount' to each project object
+            allProjects = projectsData.map(p => {
+                const totalAmountValue = parseFloat(p.totalamt) || 0;
+                const grantAmountValue = parseFloat(p.grantamt) || 0;
+                return {
+                    ...p,
+                    totalCommitmentAmount: totalAmountValue + grantAmountValue
+                };
+            });
+
             filteredProjects = [...allProjects];
             
             populateAndInitFilters();
-            renderCurrentPage();
+            sortAndRender(); // Use sortAndRender to apply default sorting
         } catch (error) {
-            dom.alertContainer.innerHTML = `<div class="alert alert-danger" role="alert">Lỗi tải dữ liệu từ World Bank: ${error.message}</div>`;
+            showAlert(`Lỗi tải dữ liệu từ World Bank: ${error.message}`, 'danger');
             dom.resultsContainer.innerHTML = '<div class="alert alert-danger text-center">Không thể tải dữ liệu. Vui lòng thử lại.</div>';
         }
     }
+
 
     function setupEventListeners() {
         dom.paginationContainer.addEventListener('click', e => {
@@ -209,17 +277,82 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
         
-        dom.resultsContainer.addEventListener('click', e => {
+        dom.resultsContainer.addEventListener('click', async (e) => {
+            const saveBtn = e.target.closest('.save-wb-btn');
             const header = e.target.closest('.sortable-header');
-            if(!header) return;
-            const newSortBy = header.dataset.sortBy;
-            if (state.sortBy === newSortBy) {
-                state.sortOrder = state.sortOrder === 'asc' ? 'desc' : 'asc';
-            } else {
-                state.sortBy = newSortBy;
-                state.sortOrder = 'desc';
+    
+            if (header) {
+                const newSortBy = header.dataset.sortBy;
+                if(newSortBy) {
+                    if (state.sortBy === newSortBy) {
+                        state.sortOrder = state.sortOrder === 'asc' ? 'desc' : 'asc';
+                    } else {
+                        state.sortBy = newSortBy;
+                        state.sortOrder = 'desc';
+                    }
+                    sortAndRender();
+                }
+                return;
             }
-            sortAndRender();
+            
+            if (saveBtn) {
+                if (!getCurrentUser()) {
+                    showAlert('Vui lòng đăng nhập để sử dụng tính năng này.', 'warning');
+                    return;
+                }
+    
+                const { isSaved, userWbId, projectId } = saveBtn.dataset;
+                const icon = saveBtn.querySelector('i');
+                
+                saveBtn.disabled = true;
+                icon.className = 'spinner-border spinner-border-sm';
+    
+                try {
+                    if (isSaved === 'true') {
+                        await apiService.deleteWorldBankProject(userWbId);
+                        savedWorldBankProjects.delete(projectId);
+                        showAlert('Đã bỏ lưu dự án.', 'info');
+                        
+                        saveBtn.dataset.isSaved = 'false';
+                        saveBtn.dataset.userWbId = '';
+                        saveBtn.title = 'Lưu dự án';
+                        icon.className = 'bi bi-bookmark';
+
+                    } else {
+                        const payload = {
+                            project_id: projectId,
+                            project_name: saveBtn.dataset.projectName,
+                            project_country: saveBtn.dataset.projectCountry,
+                            project_commitmentamount: saveBtn.dataset.projectCommitmentamount,
+                            project_status: saveBtn.dataset.projectStatus,
+                            project_approve_year: saveBtn.dataset.projectApproveYear || null, 
+                            project_last_update: saveBtn.dataset.projectLastUpdate || null,
+                            project_last_stage: saveBtn.dataset.projectLastStage,
+                            project_url: saveBtn.dataset.projectUrl
+                        };
+                        const result = await apiService.saveWorldBankProject(payload);
+                        
+                        if (result.success && result.data) {
+                            savedWorldBankProjects.set(projectId, result.data.user_worldbank_id);
+                            showAlert('Lưu dự án thành công.', 'success');
+
+                            saveBtn.dataset.isSaved = 'true';
+                            saveBtn.dataset.userWbId = result.data.user_worldbank_id;
+                            saveBtn.title = 'Bỏ lưu dự án';
+                            icon.className = 'bi bi-bookmark-check-fill text-success';
+                        } else {
+                             throw new Error(result.message || 'Lỗi không xác định từ server.');
+                        }
+                    }
+                } catch (error) {
+                    showAlert(`Thao tác thất bại: ${error.message}`, 'danger');
+                    const originalIsSaved = isSaved === 'true';
+                    icon.className = originalIsSaved ? 'bi bi-bookmark-check-fill text-success' : 'bi bi-bookmark';
+                    saveBtn.title = originalIsSaved ? 'Bỏ lưu dự án' : 'Lưu dự án';
+                } finally {
+                    saveBtn.disabled = false;
+                }
+            }
         });
 
         dom.searchInput.addEventListener('input', debounce(() => {
@@ -257,6 +390,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function initialize() {
         renderLayout();
+        await initializeAuthUI();
         setupEventListeners();
         await fetchInitialData(); 
     }

@@ -56,7 +56,7 @@ function createArticleCard(article) {
             <i class="bi ${saveIconClass} save-icon"></i>
         </div>`;
 
-    // --- Final card assembly (FIX IS HERE) ---
+    // --- Final card assembly ---
     return `
         <div class="col-lg-4 mb-4">
             <div class="card article-card shadow-sm h-100" data-article-id-wrapper="${article.article_id}">

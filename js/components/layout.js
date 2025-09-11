@@ -35,7 +35,7 @@ function createHeader(title) {
 
 /**
  * Tải và khởi tạo Google Translate Widget, đồng thời gắn sự kiện cho menu tùy chỉnh.
- * PHIÊN BẢN SỬA LỖI CUỐI CÙNG - Hoạt động ổn định bằng cách ghi đè cookie.
+ * Hoạt động ổn định bằng cách ghi đè cookie.
  */
 function setupGoogleTranslate() {
     const langMap = { 'vi': 'Tiếng Việt', 'en': 'English', 'ja': '日本語' };
