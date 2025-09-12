@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // === CONSTANTS & STATE ===
     const URLS = {
         plan: 'https://dauthau.asia/kehoach/luachon-nhathau/?q=d%E1%BB%B1+%C3%A1n+c%E1%BA%A7u%2C+%C4%91%C6%B0%E1%BB%9Dng%2C+%C4%91%C6%B0%E1%BB%9Dng+s%E1%BA%AFt&type_search=1&type_info=2&type_info3=1&is_advance=1&is_province=0&is_kqlcnt=0&q2=giao+th%C3%B4ng%2C+x%C3%A2y+d%E1%BB%B1ng&type_choose_id=0&search_idprovince_plan=1',
-        invitation: 'https://dauthau.asia/thongbao/moithau/goi-thau-dau-qua-mang/?goods=0&searchkind=0&type_choose_id=0&khlcnt=0&q=b%C3%A1o+c%C3%A1o+nghi%C3%AAn+c%E1%BB%A9u+kh%E1%BA%A3+thi%2C+thi%E1%BA%BFt+k%E1%BA%BF+k%E1%BB%B9+thu%E1%BA%ADt%2C+BCNCKT%2C+TKKT&search_idprovince=1&sfrom=10%2F09%2F2024&sto=10%2F09%2F2025&field%5B0%5D=3&q2=giao+th%C3%B4ng%2C+x%C3%A2y+d%E1%BB%B1ng&is_advance=1',
+        invitation: 'https://dauthau.asia/thongbao/moithau/goi-thau-dau-qua-mang/?goods=0&searchkind=0&type_choose_id=0&khlcnt=0&q=b%C3%A1o+c%C3%A1o+nghi%C3%AAn+c%E1%BB%A9u+kh%E1%BA%A3+thi%2C+thi%E1%BA%BFt+k%E1%BA%BF+k%E1%BB%B9+thu%E1%BA%ADt%2C+BCNCKT%2C+TKKT&search_idprovince=1&sfrom=12%2F09%2F2024&sto=12%2F09%2F2025&field%5B0%5D=3&q2=giao+th%C3%B4ng%2C+x%C3%A2y+d%E1%BB%B1ng&is_advance=1',
     };
     const TOTAL_PAGES = 5;
 
