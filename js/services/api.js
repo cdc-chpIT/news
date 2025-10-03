@@ -1,3 +1,5 @@
+// File: cdc-chpit/news/news-218ec43bcb0d9af4130d53308cae379978fd43b6/js/services/api.js
+
 const API_BASE_URL = config.API_BASE_URL;
 
 const apiService = {
@@ -217,11 +219,11 @@ const apiService = {
         });
     },
     getSavedArticleIds() {
-        return this._request('/users/me/saved-articles/');
+        return this._request('/users/me/saved-articles/', { cache: 'no-cache' });
     },
 
     fetchSavedArticles() {
-        return this._request('/users/me/saved-articles/details');
+        return this._request('/users/me/saved-articles/details', { cache: 'no-cache' });
     },
 
     saveArticle(articleId) {
@@ -238,7 +240,7 @@ const apiService = {
     },
 
     fetchUserProcurements() {
-        return this._request('/user-procurements/', { method: 'GET' });
+        return this._request('/user-procurements/', { method: 'GET', cache: 'no-cache' });
     },
 
     saveUserProcurement(procurementData) {
@@ -267,7 +269,6 @@ const apiService = {
     },
 
     fetchUserKeywords() {
-        // FIX: Ensure this call always gets fresh data from the server
         return this._fetch('/users/me/preferences/keywords', {}, { cache: 'no-cache' });
     },
 
@@ -290,18 +291,66 @@ const apiService = {
         });
     },
 
-    fetchAdbRssFeed() {
+    fetchAdbRssFeed(filterPath = 'all/all/all/all/all/all/all') {
         const token = getCookie('accessToken');
         const headers = { 'ngrok-skip-browser-warning': 'true' };
         if (token) {
             headers['Authorization'] = `Bearer ${token}`;
         }
-        return fetch(`${API_BASE_URL}/adb/rss`, { headers })
+        
+        const url = `${API_BASE_URL}/adb/rss?filters=${filterPath}`;
+        
+        return fetch(url, { headers })
             .then(res => {
                 if (!res.ok) {
-                    throw new Error('Không thể lấy RSS feed từ backend.');
+                    return res.text().then(text => { 
+                        throw new Error(`Lỗi từ backend: Status ${res.status} - ${text}`); 
+                    });
                 }
                 return res.text();
+            })
+            .catch(error => {
+                console.error("Lỗi khi gọi fetchAdbRssFeed:", error);
+                throw error;
             });
-    }
+    },
+    
+    fetchWorldBankProjects(params) {
+        return this._fetch('/worldbank/projects', params);
+    },
+
+    getSavedWorldBankProjects() {
+        return this._request('/worldbank/saved-projects', { method: 'GET', cache: 'no-cache' });
+    },
+
+    saveWorldBankProject(projectData) {
+        return this._request('/worldbank/saved-projects', {
+            method: 'POST',
+            body: JSON.stringify(projectData)
+        });
+    },
+
+    deleteWorldBankProject(userWorldbankId) {
+        return this._request(`/worldbank/saved-projects/${userWorldbankId}`, {
+            method: 'DELETE'
+        });
+    },
+
+    // --- APIs for User Saved ADB Projects ---
+    getSavedAdbProjects() {
+        return this._request('/adb/saved-projects', { method: 'GET', cache: 'no-cache' });
+    },
+
+    saveAdbProject(projectData) {
+        return this._request('/adb/saved-projects', {
+            method: 'POST',
+            body: JSON.stringify(projectData)
+        });
+    },
+
+    deleteAdbProject(userAdbId) {
+        return this._request(`/adb/saved-projects/${userAdbId}`, {
+            method: 'DELETE'
+        });
+    },
 };

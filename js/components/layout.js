@@ -35,7 +35,7 @@ function createHeader(title) {
 
 /**
  * Tải và khởi tạo Google Translate Widget, đồng thời gắn sự kiện cho menu tùy chỉnh.
- * PHIÊN BẢN SỬA LỖI CUỐI CÙNG - Hoạt động ổn định bằng cách ghi đè cookie.
+ * Hoạt động ổn định bằng cách ghi đè cookie.
  */
 function setupGoogleTranslate() {
     const langMap = { 'vi': 'Tiếng Việt', 'en': 'English', 'ja': '日本語' };
@@ -113,7 +113,8 @@ function createNavbar(activePage = 'dashboard') {
         { id: 'dashboard', href: 'index.html', text: 'Dashboard' },
         { id: 'news', href: 'news.html', text: 'Tin Tức' },
         { id: 'scraper', href: 'scraper.html', text: 'Mua sắm công' },
-        { id: 'adb', href: 'adb.html', text: 'ADB' }, // <-- MỤC MỚI ĐƯỢC THÊM VÀO ĐÂY
+        { id: 'adb', href: 'adb.html', text: 'ADB' }, 
+        { id: 'worldbank', href: 'worldbank.html', text: 'World Bank' },
         { id: 'keywords', href: 'keywords.html', text: 'Quản lý Từ khóa', adminOnly: true },
         { id: 'categories', href: 'categories.html', text: 'Quản lý Danh mục', adminOnly: true },
         { id: 'sources', href: 'sources.html', text: 'Quản lý Nguồn tin', adminOnly: true },

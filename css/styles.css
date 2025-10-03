@@ -43,15 +43,21 @@ body {
     padding-left: 1rem;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     transition: transform 0.3s ease-in-out;
+    position: relative; 
 }
 
-/* Kích hoạt hiệu ứng khi cuộn */
+.sticky-header-wrapper.scrolled {
+    pointer-events: none;
+}
+
 .sticky-header-wrapper.scrolled .top-header {
     transform: translateY(-96px);
 }
 
 .sticky-header-wrapper.scrolled .main-navbar {
     transform: translateY(-96px);
+    pointer-events: auto;
+    z-index: 1051; 
 }
 
 
@@ -93,6 +99,12 @@ body {
     box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
     max-height: calc(100vh - 85px);
     overflow-y: auto;
+}
+
+
+#filter-sidebar-container.sticky-top {
+    top: 60px !important; 
+    z-index: 1020;
 }
 
 .tag-filter-container {
@@ -539,10 +551,9 @@ body {
     border-color: #dee2e6 !important;
 }
 
-/* === CUSTOM TRANSLATE DROPDOWN (v5 - FIXED) === */
+/* === CUSTOM TRANSLATE DROPDOWN  === */
 
 /*
- * FIX: Thay vì dùng "display: none", chúng ta sẽ ẩn tiện ích của Google
  * bằng cách làm cho nó vô hình và không thể click vào.
  * Điều này đảm bảo script của Google vẫn có thể hoạt động bình thường.
 */
@@ -723,3 +734,110 @@ body {
         width: 11%;
     }
 }
+
+.accordion-body .filter-search {
+    border-radius: 2px; /* Góc hơi vuông */
+    padding: .375rem .75rem;
+}
+
+.filter-list-wrapper {
+    margin-top: 1rem;
+}
+
+.filter-option-item {
+    padding-left: 0;
+    margin-bottom: 0.75rem;
+}
+
+.filter-option-item .form-check {
+    padding-left: 0;
+    display: flex;
+    align-items: center;
+}
+
+/* Tùy chỉnh checkbox */
+.filter-option-item .form-check-input {
+    margin-left: 0;
+    margin-top: 0; /* Canh giữa theo chiều dọc */
+    width: 1.25em;  /* Làm checkbox to hơn một chút */
+    height: 1.25em;
+    border: 1px solid #ced4da;
+}
+
+.filter-option-item .form-check-label {
+    padding-left: 0.75rem; /* Khoảng cách giữa checkbox và text */
+    flex-grow: 1;
+    display: flex;
+    justify-content: space-between;
+}
+
+.filter-option-item .form-check-label .text-muted {
+    white-space: nowrap;
+    margin-left: 0.5rem;
+}
+
+.btn-see-more {
+    text-decoration: none;
+    font-size: 0.9em;
+    color: #0066cc; /* Màu xanh dương đặc trưng */
+    display: inline-block;
+    margin-top: 0.5rem;
+}
+
+.btn-see-more:hover {
+    text-decoration: underline;
+}
+
+.filter-count-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75em; /* Kích thước chữ nhỏ hơn một chút */
+    font-weight: 700;  /* Chữ đậm */
+    color: #0d6efd;    /* Chữ màu xanh dương */
+    background-color: #e9ecef; /* Nền xám nhạt */
+    margin-left: 8px;
+    min-width: 22px;   /* Chiều rộng tối thiểu */
+    height: 22px;      /* Chiều cao */
+    padding: 0 6px;    /* Đệm bên trong */
+    border-radius: 50%; /* Bo tròn để tạo thành hình tròn */
+    line-height: 1;    /* Canh chữ theo chiều dọc */
+    text-align: center;
+}
+
+.save-adb-btn {
+    padding: 0.2rem 0.5rem; /* Giảm khoảng đệm của nút */
+    font-size: 1rem;       /* Đảm bảo icon có kích thước hợp lý */
+}
+
+.adb-table-container .table th:nth-child(1),
+.adb-table-container .table td:nth-child(1) {
+    width: 5%;
+    min-width: 60px;
+}
+
+/* Cột "Tên dự án" (cột 2) - Rất rộng */
+.adb-table-container .table th:nth-child(2),
+.adb-table-container .table td:nth-child(2) {
+    width: 40%; /* Tăng độ rộng cho cột tên dự án */
+}
+
+.wb-table {
+    table-layout: fixed; 
+    width: 100%;         
+}
+
+.wb-table th, .wb-table td {
+    word-wrap: break-word; 
+}
+
+/* Định nghĩa độ rộng cho từng cột - ĐÃ CẬP NHẬT */
+.wb-table th:nth-child(1) { width: 5%; }  /* Save button */
+.wb-table th:nth-child(2) { width: 30%; } /* Project Title */
+.wb-table th:nth-child(3) { width: 10%; } /* Country */
+.wb-table th:nth-child(4) { width: 8%; }  /* Project ID */
+.wb-table th:nth-child(5) { width: 12%; } /* Commitment Amount */
+.wb-table th:nth-child(6) { width: 8%; }  /* Status */
+.wb-table th:nth-child(7) { width: 10%; } /* Approval Date */
+.wb-table th:nth-child(8) { width: 10%; } /* Last updated Date */
+.wb-table th:nth-child(9) { width: 12%; } /* Last Stage Reached */
