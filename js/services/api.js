@@ -354,7 +354,16 @@ const apiService = {
         });
     },
 
-    fetchArchitectNews() {
-        return this._request('/architect/news', { method: 'GET' });
-    }
+    fetchArchitectRss() {
+        return fetch(`${API_BASE_URL}/architect/rss`, {
+            headers: {
+                'ngrok-skip-browser-warning': 'true' 
+                // Authorization header nếu cần, nhưng RSS này public nên có thể không cần
+            }
+        })
+        .then(res => {
+            if (!res.ok) throw new Error(`Lỗi API: ${res.statusText}`);
+            return res.text();
+        });
+    },
 };
