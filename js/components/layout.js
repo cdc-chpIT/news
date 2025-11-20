@@ -115,6 +115,7 @@ function createNavbar(activePage = 'dashboard') {
         { id: 'scraper', href: 'scraper.html', text: 'Mua sắm công' },
         { id: 'adb', href: 'adb.html', text: 'ADB' }, 
         { id: 'worldbank', href: 'worldbank.html', text: 'World Bank' },
+        { id: 'architect', href: 'architect.html', text: 'Thi tuyển kiến trúc' },
         { id: 'keywords', href: 'keywords.html', text: 'Quản lý Từ khóa', adminOnly: true },
         { id: 'categories', href: 'categories.html', text: 'Quản lý Danh mục', adminOnly: true },
         { id: 'sources', href: 'sources.html', text: 'Quản lý Nguồn tin', adminOnly: true },
