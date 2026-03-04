@@ -5,7 +5,7 @@ function createHeader(title) {
     return `
         <div class="top-header p-2 shadow-sm d-flex justify-content-between align-items-center">
             <a href="index.html" class="logo-link d-flex align-items-center text-decoration-none text-white">
-                <img src="images/CHP_Logo.png" alt="CHP Logo" style="height: 80px; width:140px; margin-right: 15px;">
+                <img src="images/CKJVN.png" alt="CHP Logo" style="height: 80px; margin-right: 15px;">
             </a>
 
             <div class="header-title-center">
