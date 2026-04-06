@@ -1,4 +1,4 @@
 const config = {
-    API_BASE_URL: 'https://695c-118-70-187-46.ngrok-free.app/api/v1'
+    API_BASE_URL: 'https://1233-118-70-187-46.ngrok-free.app/api/v1'
 };
 //(Invoke-RestMethod -Uri "http://localhost:4040/api/tunnels").tunnels[0].public_url
